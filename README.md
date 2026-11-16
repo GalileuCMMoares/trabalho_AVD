@@ -4,7 +4,7 @@ Estrutura inicial do projeto de Análise e Visualização de Dados. A Parte Espe
 
 ## Dataset da Parte Específica
 
-A página oficial do UCI informa 48.842 instâncias, 14 atributos, variáveis categóricas e inteiras, tarefa de classificação e presença de valores ausentes. O alvo é a faixa de renda anual acima ou abaixo de US$ 50 mil. A aprovação do dataset pela professora precisa ser confirmada pelo grupo.
+A página oficial do UCI informa 48.842 instâncias, 14 atributos, variáveis categóricas e inteiras, tarefa de classificação e presença de valores ausentes. O alvo é a faixa de renda anual acima ou abaixo de US$ 50 mil. O dataset foi aprovado pela professora.
 
 Fonte: [UCI Machine Learning Repository — Adult](https://archive.ics.uci.edu/dataset/2/adult)  
 Referência: Becker, B. & Kohavi, R. (1996). Adult. UCI Machine Learning Repository. DOI: 10.24432/C5XW20.  
@@ -30,7 +30,7 @@ Crie um ambiente virtual e instale as dependências:
     python src/parte_especifica/download_data.py
     python src/parte_especifica/eda_inicial.py
 
-As tabelas são gravadas em out/parte_especifica/eda/. O script não cria gráficos nem conclusões: cabe ao grupo interpretar os resultados, definir as visualizações e escrever as notas analíticas.
+As tabelas são gravadas em out/parte_especifica/eda/. O script gera apenas tabelas; as interpretações estão em docs/relatorio_template.md.
 
 ## Estrutura
 
