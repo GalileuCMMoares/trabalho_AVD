@@ -1,3 +1,6 @@
 # Notebooks da Parte Comum
 
-Reservado. O grupo ainda precisa escolher o dataset comum (Obesity ou Wine Quality) e definir a implementação em notebook ou scripts Python.
+Implementação da Parte Comum sobre o dataset **Obesity** (`data/parte_comum/ObesityDataSet_raw_and_data_sinthetic.csv`), conforme a estrutura obrigatória do enunciado:
+
+- `eda.ipynb`: Análise Exploratória de Dados (pilares estrutural, distribucional, relacional e outliers).
+- `kmeans_metricas.ipynb`: Padronização, agrupamento com K-Means (Passada 1 com `k` livre via Método do Cotovelo e Passada 2 com `k` fixo) e métricas/matriz de confusão.

@@ -34,12 +34,13 @@ As tabelas são gravadas em out/parte_especifica/eda/. O script gera apenas tabe
 
 ## Estrutura
 
-- data/parte_comum/: dataset comum da turma (Obesity ou Wine Quality; escolha pendente).
+- data/parte_comum/: dataset comum da turma (Obesity — UCI Machine Learning Repository).
 - data/parte_especifica/: dados do Adult obtidos pelo script.
-- docs/relatorio_template.md: roteiro vazio para o relatório.
-- notebooks/parte_comum/: reservado à implementação da Parte Comum.
+- docs/relatorio_template.md: roteiro para o relatório.
+- docs/DECLARACAO_IA.md: rascunho da declaração de uso de IA (exportar assinada como docs/DECLARACAO_IA.pdf para entrega).
+- notebooks/parte_comum/: notebooks da Parte Comum (eda.ipynb e kmeans_metricas.ipynb).
 - out/: tabelas e resultados gerados.
-- src/parte_comum/: reservado aos scripts da Parte Comum.
+- src/parte_comum/: pasta alternativa para scripts da Parte Comum (o grupo optou por notebooks).
 - src/parte_especifica/: download e tabelas de apoio à EDA.
 
 ## Uso de IA

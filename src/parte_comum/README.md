@@ -1,3 +1,3 @@
 # Parte Comum
 
-Pasta reservada à implementação de EDA, padronização, K-Means e métricas sobre Obesity ou Wine Quality. O grupo ainda precisa escolher o dataset.
+Pasta prevista no enunciado como alternativa em scripts `.py` para EDA, padronização, K-Means e métricas. O grupo optou pela entrega em notebooks Jupyter em `notebooks/parte_comum/` (`eda.ipynb` e `kmeans_metricas.ipynb`).
