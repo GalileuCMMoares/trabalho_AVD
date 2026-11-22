@@ -1,0 +1,16 @@
+coluna,tipo,linhas_preenchidas,valores_ausentes,percentual_ausente,valores_unicos
+age,int64,48842,0,0.0,74
+workclass,str,46043,2799,5.73,8
+fnlwgt,int64,48842,0,0.0,28523
+education,str,48842,0,0.0,16
+education-num,int64,48842,0,0.0,16
+marital-status,str,48842,0,0.0,7
+occupation,str,46033,2809,5.75,14
+relationship,str,48842,0,0.0,6
+race,str,48842,0,0.0,5
+sex,str,48842,0,0.0,2
+capital-gain,int64,48842,0,0.0,123
+capital-loss,int64,48842,0,0.0,99
+hours-per-week,int64,48842,0,0.0,96
+native-country,str,47985,857,1.75,41
+income,str,48842,0,0.0,2

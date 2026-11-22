@@ -1,0 +1,3 @@
+passada,k,acurácia,precisão macro,recall macro,classes representadas,clusters com mesmo rótulo
+1 — k livre,4,0.3104935313847628,0.17411818737490717,0.30997622851555434,4/7,0
+2 — k fixo,7,0.38236703402012456,0.2649472290913428,0.37009023860565815,5/7,2

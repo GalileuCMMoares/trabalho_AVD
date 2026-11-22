@@ -4,13 +4,8 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 
-# Dados e resultados gerados localmente
+# Dados gerados localmente (o out/ é versionado: o relatório referencia essas figuras e tabelas)
 data/parte_especifica/adult.csv
 data/parte_especifica/raw/
-out/parte_comum/*
-!out/parte_comum/.gitkeep
-out/parte_especifica/*
-!out/parte_especifica/.gitkeep
 ## responsáveis pelo svg (eu nao vou subir isso aqui, deixar só local)
 src/parte_especifica/visualizacoes.js
-out/parte_especifica/visualizacoes

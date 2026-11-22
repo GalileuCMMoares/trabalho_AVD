@@ -97,7 +97,7 @@ As 7 classes são cortes de uma única variável contínua (IMC). As faixas vizi
 
 ### EDA
 
-As tabelas de apoio estão em `out/parte_especifica/eda/` (geradas por `src/parte_especifica/eda_inicial.py`).
+A EDA está em `src/parte_especifica/eda.ipynb`, e as figuras geradas por ele estão em `out/parte_especifica/figuras/`. As tabelas de apoio estão em `out/parte_especifica/eda/` (geradas por `src/parte_especifica/eda_inicial.py`).
 
 **1. Estrutura.** 48.842 linhas e 15 colunas: 6 numéricas inteiras (`age`, `fnlwgt`, `education-num`, `capital-gain`, `capital-loss`, `hours-per-week`) e 9 categóricas (incluindo `income`). `education` e `education-num` descrevem a mesma informação (16 níveis); usaremos apenas uma delas por análise. `fnlwgt` é um peso amostral do censo, não uma característica da pessoa, e não será usado como variável explicativa. A classe é desbalanceada: 37.155 (76,1%) `<=50K` e 11.687 (23,9%) `>50K`.
 

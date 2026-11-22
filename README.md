@@ -32,6 +32,12 @@ Crie um ambiente virtual e instale as dependências:
 
 As tabelas são gravadas em out/parte_especifica/eda/. O script gera apenas tabelas; as interpretações estão em docs/relatorio_template.md.
 
+### Executar a EDA do Adult (notebook)
+
+    jupyter notebook src/parte_especifica/eda.ipynb
+
+As figuras do notebook são gravadas em out/parte_especifica/figuras/. O notebook localiza a raiz do projeto sozinho, então pode ser aberto de qualquer pasta.
+
 ### Executar o dashboard
 
 Com o dataset local disponivel, execute:
@@ -47,9 +53,9 @@ O aplicativo possui filtros de perfil, indicadores, visualizacoes exploratorias,
 - docs/relatorio_template.md: roteiro para o relatório.
 - docs/DECLARACAO_IA.md: rascunho da declaração de uso de IA (exportar assinada como docs/DECLARACAO_IA.pdf para entrega).
 - notebooks/parte_comum/: notebooks da Parte Comum (eda.ipynb e kmeans_metricas.ipynb).
-- out/: tabelas e resultados gerados.
+- out/: tabelas e figuras geradas pelos notebooks e scripts (versionadas, pois o relatório faz referência a elas). Em out/parte_comum/kmeans/ ficam os resultados do K-Means; em out/parte_especifica/ ficam eda/ (tabelas), figuras/ (EDA) e visualizacoes/ (as seis visualizações).
 - src/parte_comum/: pasta alternativa para scripts da Parte Comum (o grupo optou por notebooks).
-- src/parte_especifica/: download e tabelas de apoio à EDA.
+- src/parte_especifica/: download dos dados, EDA (eda.ipynb e eda_inicial.py), visualizações (visualizacoes.py) e dashboard (dashboard.py).
 
 ## Uso de IA
 

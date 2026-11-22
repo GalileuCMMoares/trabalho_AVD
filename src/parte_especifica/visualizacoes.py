@@ -57,7 +57,7 @@ def exploratoria_1_classe(df: pd.DataFrame) -> None:
         ax.text(barra.get_x() + barra.get_width() / 2, valor + 500, f"{valor:,}\n({valor / len(df):.1%})", ha="center")
     ax.set_ylim(0, contagem.max() * 1.16)
     finalizar(ax, "Distribuição da faixa de renda", "Faixa de renda anual", "Número de pessoas")
-    salvar(fig, "01_exploratoria_distribuicao_renda")
+    salvar(fig, "01 - Distribuição por Renda")
 
 
 def exploratoria_2_idade(df: pd.DataFrame) -> None:
@@ -76,7 +76,7 @@ def exploratoria_2_idade(df: pd.DataFrame) -> None:
     )
     finalizar(ax, "Distribuição de idade por faixa de renda", "Idade (anos)", "% dentro de cada faixa de renda")
     ax.legend_.set_title("Renda")
-    salvar(fig, "02_exploratoria_idade_por_renda")
+    salvar(fig, "02 - Idade por Renda")
 
 
 def exploratoria_3_educacao(df: pd.DataFrame) -> None:
@@ -93,7 +93,7 @@ def exploratoria_3_educacao(df: pd.DataFrame) -> None:
         ax=ax,
     )
     finalizar(ax, "Nível de escolaridade por faixa de renda", "Faixa de renda anual", "Nível numérico de escolaridade")
-    salvar(fig, "03_exploratoria_escolaridade_por_renda")
+    salvar(fig, "03 - Escolaridade por Renda")
 
 
 def exploratoria_4_ocupacao(df: pd.DataFrame) -> None:
@@ -109,7 +109,7 @@ def exploratoria_4_ocupacao(df: pd.DataFrame) -> None:
     ax.barh(tabela["occupation"], tabela["taxa_alta_renda"] * 100, color="#4C78A8")
     finalizar(ax, "Taxa de renda acima de US$ 50 mil por ocupação", "% com renda >50K", "Ocupação")
     ax.set_xlim(0, max(55, tabela["taxa_alta_renda"].max() * 115))
-    salvar(fig, "04_exploratoria_renda_por_ocupacao")
+    salvar(fig, "04 - Renda por ocupação")
 
 
 def explanatoria_1_pergunta_pesquisa(df: pd.DataFrame) -> None:
@@ -132,7 +132,7 @@ def explanatoria_1_pergunta_pesquisa(df: pd.DataFrame) -> None:
     )
     ax.set_xlim(0, min(100, tabela["taxa_alta_renda"].max() * 100 + 12))
     ax.text(0, -0.14, "Vermelho: níveis com taxa igual ou superior a 40%. Associação descritiva; não demonstra causalidade.", transform=ax.transAxes, fontsize=8.5)
-    salvar(fig, "05_explanatoria_pergunta_escolaridade")
+    salvar(fig, "05 - Pergunta por escolaridade")
 
 
 def explanatoria_2_horas_escolaridade(df: pd.DataFrame) -> None:
@@ -156,7 +156,7 @@ def explanatoria_2_horas_escolaridade(df: pd.DataFrame) -> None:
     )
     finalizar(ax, "Renda alta é mais frequente onde escolaridade e jornada são maiores", "Faixa de horas trabalhadas por semana", "Nível numérico de escolaridade")
     ax.text(0, -0.14, "Células mostram a proporção de pessoas com renda >50K em cada combinação.", transform=ax.transAxes, fontsize=8.5)
-    salvar(fig, "06_explanatoria_escolaridade_horas")
+    salvar(fig, "06 - Escolaridade por Horas")
 
 
 def main() -> None:

@@ -1,0 +1,8 @@
+real,Insufficient_Weight,Normal_Weight,Overweight_Level_I,Overweight_Level_II,Obesity_Type_I,Obesity_Type_II,Obesity_Type_III
+Insufficient_Weight,123,85,0,0,52,0,7
+Normal_Weight,82,98,0,0,58,18,26
+Overweight_Level_I,60,69,0,0,95,38,14
+Overweight_Level_II,52,55,0,0,95,66,22
+Obesity_Type_I,38,50,0,0,134,97,32
+Obesity_Type_II,0,0,0,0,82,119,96
+Obesity_Type_III,0,0,0,0,0,0,324
