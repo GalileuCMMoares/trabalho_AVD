@@ -7,5 +7,3 @@ __pycache__/
 # Dados gerados localmente (o out/ é versionado: o relatório referencia essas figuras e tabelas)
 data/parte_especifica/adult.csv
 data/parte_especifica/raw/
-## responsáveis pelo svg (eu nao vou subir isso aqui, deixar só local)
-src/parte_especifica/visualizacoes.js

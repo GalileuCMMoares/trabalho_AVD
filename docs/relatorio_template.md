@@ -13,7 +13,15 @@
 
 ### Dataset e preparação
 
-Registrar a fonte, as decisões de limpeza e a padronização.
+**Fonte.** UCI Machine Learning Repository, *Estimation of Obesity Levels Based On Eating Habits and Physical Condition* (ID 544), arquivo `ObesityDataSet_raw_and_data_sinthetic.csv`. São 2.111 instâncias e 17 atributos: 8 numéricos, 8 categóricos e a variável alvo `NObeyesdad`, com 7 classes de nível de obesidade. Não há valores ausentes.
+
+**Limpeza.** Havia 24 linhas duplicadas, que foram removidas, restando 2.087 linhas. Decidimos remover as duplicatas devido a baixa probabilidade de duas pessoas diferentes responderem exatamente igual a 17 perguntas, o que pode configurar envios duplicados de formulario. Além disso, como o número de linhas duplicadas e pequeno, n perdemos volume relevante.
+
+**Padronização.** Como o K-Means nao pode ter acesso aos rotulos reais durante o agrupamento, a coluna `NObeyesdad` foi guardada separada (usada apenas na avaliacao e nas métricas) e aplicamos o `StandardScaler` do `scikit-learn` nas 8 variaveis numéricas.
+
+Essa etapa e necessaria porque o K-Means forma os grupos calculando a distancia euclidiana entre os registros e os centroides. No dataset *Obesity*, as variáveis numericas estao em escalas muito diferentes, por exemplo, `Weight` varia muito mais numericamente (de 39 a 173) do que `NCP`, que varia de 1 a 4. Sem padronizar os dados, as variaveis com escalas numericas diferentes teriam pesos diferentes. As de maior escala dominariam o calculo do K-Means, enquanto as de menor escala teriam peso irrelevante.
+
+Ao aplicar a padronizacao com o `StandardScaler`, todas as variáveis numericas passam a ter media igual a 0 e desvio padrao igual a 1, garantindo que todas tenham o mesmo peso e evitando que o agrupamento seja influenciado desproporcionalmente.
 
 ### EDA
 
