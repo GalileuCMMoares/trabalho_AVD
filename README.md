@@ -53,4 +53,4 @@ O aplicativo possui filtros de perfil, indicadores, visualizacoes exploratorias,
 
 ## Uso de IA
 
-A IA foi usada como apoio técnico para estruturar o projeto e preparar o código de download e de tabelas descritivas. Os trechos correspondentes estão marcados nos arquivos Python. O grupo deve revisar e saber explicar o código, registrar o uso na declaração exigida e produzir por conta própria as interpretações, escolhas de gráficos e conclusões.
+A Inteligência Artificial foi utilizada exclusivamente como apoio técnico ao desenvolvimento do projeto, incluindo organização da estrutura de arquivos, implementação de scripts, preparação dos dados, geração de visualizações e desenvolvimento do dashboard. Os trechos de código produzidos com esse apoio estão identificados nos respectivos arquivos. Todas as decisões analíticas, interpretações dos resultados, escolhas metodológicas, justificativas e conclusões foram revisadas e validadas pelo grupo, que se responsabiliza integralmente pelo conteúdo apresentado e deve ser capaz de explicar cada etapa do projeto.
