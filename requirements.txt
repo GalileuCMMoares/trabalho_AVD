@@ -7,4 +7,5 @@ scikit-learn
 streamlit
 nbconvert
 ipykernel
+notebook
 nbformat

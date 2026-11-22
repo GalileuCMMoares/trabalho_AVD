@@ -7,7 +7,7 @@
 | João Pedro Aguiar Morais | Parte Comum: EDA, padronização dos dados, agrupamento com K-Means e análise de métricas. |
 | Galileu Calaça Menezes de Moraes | *Descrever as contribuições realizadas no projeto.* |
 | Caio Guimarães Rocha | Parte Específica: implementação das visualizações, organização das notas analíticas e desenvolvimento do dashboard interativo em Streamlit. |
-| Mateus de Almeida Ribeiro | *Descrever as contribuições realizadas no projeto.* |
+| Mateus de Almeida Ribeiro | Parte Específica e organização do projeto: revisão da Parte Específica, organização da estrutura do repositório e conferência de que todas as entregas atendem aos requisitos do projeto. |
 
 ## Parte Comum
 
