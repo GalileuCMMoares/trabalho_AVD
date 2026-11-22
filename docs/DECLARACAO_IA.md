@@ -46,7 +46,7 @@ Declaro que **todas as decisões analíticas e metodológicas principais foram t
 **Etapa do projeto:** Visualizações e Dashboard com Streamlit 
 
 **Finalidade e forma de utilização:**  
-Após o grupo definir as seis visualizações da Parte Específica — quatro exploratórias e duas explanatórias — utilizei o Codex como apoio técnico para estruturar os scripts `visualizacoes.py`, responsáveis pela geração dos gráficos. Em seguida, utilizei a ferramenta para implementar o dashboard em Streamlit (`dashboard.py`), com filtros interativos, indicadores, gráficos e exportação do recorte filtrado em CSV. O dashboard calcula e exibe as visualizações diretamente a partir dos dados filtrados.
+Após o grupo definir as seis visualizações da Parte Específica (quatro exploratórias e duas explanatórias)utilizei o Codex como apoio técnico para estruturar os scripts `visualizacoes.py`, responsáveis pela geração dos gráficos. Em seguida, utilizei a ferramenta para implementar o dashboard em Streamlit (`dashboard.py`), com filtros interativos, indicadores, gráficos e exportação do recorte filtrado em CSV. O dashboard calcula e exibe as visualizações diretamente a partir dos dados filtrados.
 
 **Declaração de autoria e tomada de decisão:**  
 Declaro que as decisões analíticas e metodológicas da Parte Específica foram tomadas por mim. A definição da pergunta de pesquisa, a seleção das seis visualizações, a escolha dos filtros do dashboard e as decisões de tratamento dos dados foram discutidas, revisadas e validadas pelos integrantes. O uso do Codex foi restrito ao apoio técnico na implementação dos scripts de visualização e do dashboard em Streamlit. A interpretação dos resultados da EDA, a avaliação dos outliers, as justificativas apresentadas no relatório e as conclusões sobre os dados são de responsabilidade do grupo.
@@ -55,11 +55,14 @@ Declaro que as decisões analíticas e metodológicas da Parte Específica foram
 
 ### 4. Mateus de Almeida Ribeiro
 
-**Ferramenta utilizada:** *[Preencher ou indicar "Não utilizou IA"]*  
-**Etapa do projeto:** *[Preencher]*
+**Ferramenta utilizada:** Claude (Claude Code)  
+**Etapa do projeto:** Parte Específica e revisão dos requisitos do projeto como um todo
 
 **Finalidade e forma de utilização:**  
-*[Descrever como a IA foi utilizada dentro das regras permitidas ou declarar que não houve uso.]*
+Utilizei o Claude como apoio técnico para revisar o repositório do grupo em relação aos requisitos do enunciado do projeto, tanto da Parte Comum quanto da Parte Específica. A ferramenta foi usada para conferir a estrutura de pastas, a presença dos entregáveis obrigatórios (README, relatório, declaração de uso de IA e matriz de contribuição), a execução dos notebooks e do dashboard em Streamlit e a consistência entre o código e a documentação. O resultado foi uma lista de itens pendentes e de pontos a verificar, que o grupo avaliou e decidiu como tratar.
+
+**Declaração de autoria e tomada de decisão:**  
+Declaro que o uso do Claude foi restrito à revisão de conformidade do projeto com os requisitos e ao apoio técnico com o código, sem o uso de IA para gerar análises, interpretações de gráficos, discussões, conclusões, notas analíticas ou a narrativa do storytelling. As decisões analíticas e metodológicas da Parte Específica, as interpretações dos resultados, as justificativas apresentadas no relatório e as conclusões sobre os dados são de responsabilidade do grupo.
 
 ---
 
