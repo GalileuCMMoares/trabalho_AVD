@@ -2,7 +2,12 @@
 
 ## Integrantes e matriz de contribuição
 
-Preencher com os nomes e as contribuições reais.
+| Integrante | Contribuições no projeto |
+|---|---|
+| João Pedro Aguiar Morais | Parte Comum: EDA, padronização dos dados, agrupamento com K-Means e análise de métricas. |
+| Galileu Calaça Menezes de Moraes | *Descrever as contribuições realizadas no projeto.* |
+| Caio Guimarães Rocha | Parte Específica: implementação das visualizações, organização das notas analíticas e desenvolvimento do dashboard interativo em Streamlit. |
+| Mateus de Almeida Ribeiro | *Descrever as contribuições realizadas no projeto.* |
 
 ## Parte Comum
 
@@ -26,7 +31,9 @@ Comparar os resultados e discutir a granularidade das classes.
 
 ### Pergunta de pesquisa e público-alvo
 
-Preencher pelo grupo.
+**Pergunta de pesquisa.** Como a escolaridade se associa à proporção de pessoas com renda anual acima de US$ 50 mil na base Adult, e como as horas trabalhadas ajudam a contextualizar essa associação?
+
+**Público-alvo.** Equipe de planejamento educacional e empregabilidade que precisa de uma visão inicial dos perfis presentes na amostra. O objetivo é identificar padrões descritivos que merecem investigação adicional; os resultados não demonstram causalidade nem devem embasar decisões individuais.
 
 ### Dataset e preparação
 
@@ -73,12 +80,58 @@ Para visualização, `capital-gain` e `capital-loss` serão tratados em escala l
 
 ### Storytelling e visualizações
 
-Para cada visualização, registrar o que mostra, o insight extraído e por que foi escolhida. Responder à pergunta de pesquisa.
+As seis visualizações estão em `out/parte_especifica/visualizacoes/`. Foram organizadas em quatro peças exploratórias, para entender a base, e duas peças explanatórias, para comunicar a resposta à pergunta de pesquisa.
+
+#### Notas analíticas das visualizações
+
+**1. Distribuição da faixa de renda — exploratória**  
+
+- **O que mostra:** quantidade e percentual das duas classes de renda da base.
+- **Insight:** a base é desbalanceada: aproximadamente 76% dos registros estão em `<=50K` e 24% em `>50K`. Por isso, as comparações posteriores usam taxas, e não somente contagens absolutas.
+- **Motivo da escolha:** barras comparam duas categorias com clareza e sem distorção visual.
+
+**2. Distribuição de idade por faixa de renda — exploratória**  
+
+- **O que mostra:** distribuição percentual da idade dentro de cada faixa de renda.
+- **Insight:** a distribuição de `>50K` tende a se concentrar em idades maiores que a de `<=50K`, mas existe sobreposição entre os grupos. Assim, idade isolada não separa completamente as faixas de renda.
+- **Motivo da escolha:** histogramas mostram forma, dispersão e sobreposição de uma variável numérica entre grupos.
+
+**3. Escolaridade por faixa de renda — exploratória**  
+
+- **O que mostra:** mediana, dispersão e extremos de `education-num` em cada classe de renda.
+- **Insight:** a distribuição de escolaridade de `>50K` fica deslocada para níveis maiores, embora existam registros dos dois grupos em vários níveis educacionais.
+- **Motivo da escolha:** boxplots comparam mediana, quartis e extremos de forma compacta.
+
+**4. Renda acima de US$ 50 mil por ocupação — exploratória**  
+
+- **O que mostra:** proporção de pessoas com renda `>50K` por ocupação, excluindo grupos com poucas observações.
+- **Insight:** as taxas variam entre ocupações, apontando ocupação como variável relevante para aprofundamento.
+- **Motivo da escolha:** barras horizontais acomodam nomes longos e facilitam ordenar muitas categorias.
+
+**5. Taxa de renda acima de US$ 50 mil por escolaridade — explanatória**  
+
+- **O que mostra:** taxa de `>50K` em cada categoria de escolaridade.
+- **Insight:** os níveis mais altos de escolaridade apresentam taxas maiores de renda acima de US$ 50 mil na amostra. Esta é a visualização que responde diretamente à pergunta de pesquisa.
+- **Motivo da escolha:** barras ordenadas tornam a comparação entre categorias direta; a cor evidencia o patamar de 40% sem ocultar as demais categorias.
+
+**6. Escolaridade, jornada semanal e renda — explanatória**  
+
+- **O que mostra:** taxa de `>50K` para combinações de escolaridade numérica e faixas de horas trabalhadas por semana.
+- **Insight:** a associação com renda alta é mais visível em combinações de maior escolaridade e jornadas mais longas. O tamanho amostral de cada célula deve ser considerado na leitura.
+- **Motivo da escolha:** o mapa de calor sintetiza duas dimensões categorizadas e uma medida percentual usando a cor como atributo pré-atentivo.
+
+#### Resposta à pergunta de pesquisa
+
+Na amostra Adult, níveis mais altos de escolaridade estão associados a proporções maiores de pessoas com renda anual acima de US$ 50 mil. Ao combinar escolaridade e jornada semanal, a taxa de renda alta também tende a ser maior nas faixas de jornada mais longas. Esses resultados descrevem associações presentes na base: não demonstram que escolaridade ou horas trabalhadas, isoladamente, causam maior renda, pois idade, ocupação, estado civil e outras características podem estar relacionadas simultaneamente a essas variáveis.
 
 ### Dashboard
 
-Descrever como executar e quais recursos foram implementados.
+O dashboard é executado com:
+
+    streamlit run src/parte_especifica/dashboard.py
+
+Ele reúne os indicadores da amostra filtrada, a exploração por ocupação, estado civil, escolaridade e jornada semanal, além de uma aba dedicada à pergunta de pesquisa. Os filtros de sexo, tipo de trabalho, idade e horas por semana atualizam todos os gráficos e indicadores. A aplicação também permite exportar o recorte filtrado em CSV.
 
 ## Uso de IA
 
-Registrar os usos permitidos, identificar os trechos de código apoiados por IA e anexar a declaração assinada.
+Registrar os usos permitidos, identificar os trechos de código apoiados por IA e anexar a declaração assinada. Declaração: [Clique aqui](docs\DECLARACAO_IA.md)

@@ -32,6 +32,14 @@ Crie um ambiente virtual e instale as dependências:
 
 As tabelas são gravadas em out/parte_especifica/eda/. O script gera apenas tabelas; as interpretações estão em docs/relatorio_template.md.
 
+### Executar o dashboard
+
+Com o dataset local disponivel, execute:
+
+    streamlit run src/parte_especifica/dashboard.py
+
+O aplicativo possui filtros de perfil, indicadores, visualizacoes exploratorias, uma aba dedicada a pergunta de pesquisa e exportacao do recorte filtrado.
+
 ## Estrutura
 
 - data/parte_comum/: dataset comum da turma (Obesity — UCI Machine Learning Repository).

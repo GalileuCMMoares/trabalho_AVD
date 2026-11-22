@@ -11,3 +11,6 @@ out/parte_comum/*
 !out/parte_comum/.gitkeep
 out/parte_especifica/*
 !out/parte_especifica/.gitkeep
+## responsáveis pelo svg (eu nao vou subir isso aqui, deixar só local)
+src/parte_especifica/visualizacoes.js
+out/parte_especifica/visualizacoes
