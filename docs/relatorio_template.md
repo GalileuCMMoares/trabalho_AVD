@@ -16,11 +16,61 @@ Preencher a análise estrutural, distribucional, relacional e de outliers. Inclu
 
 ### K-Means e métricas
 
-Descrever as duas passadas, o mapeamento dos clusters, as matrizes de confusão e as métricas.
+Rodamos o K-Means (`random_state=42`, `n_init=10`) sobre as 8 variáveis numéricas padronizadas, em duas passadas: k = 4, escolhido pelo Método do Cotovelo, e k = 7, o número real de classes. Para avaliar, cada cluster foi mapeado para a classe real majoritária dentro dele; a matriz de confusão compara esse rótulo mapeado com a classe real. Na Passada 1 a matriz é 7×4 (só 4 rótulos possíveis) e na Passada 2 é 7×7. Acurácia, precisão e recall por classe foram calculados a partir da matriz (notebook `kmeans_metricas.ipynb`, figuras em `out/parte_comum/kmeans/`).
+
+| Passada | k | Acurácia | Precisão macro | Recall macro | Classes representadas |
+|---|---|---|---|---|---|
+| 1 — k livre | 4 | 0,310 | 0,174 | 0,310 | 4/7 |
+| 2 — k fixo | 7 | 0,382 | 0,265 | 0,370 | 5/7 |
+
+Baseline (prever sempre a classe mais frequente): acurácia 0,168.
+
+| Classe | Recall P1 | Recall P2 | Precisão P1 | Precisão P2 |
+|---|---|---|---|---|
+| Insufficient_Weight | 0,764 | 0,461 | 0,292 | 0,346 |
+| Normal_Weight | 0,000 | 0,348 | 0,000 | 0,275 |
+| Overweight_Level_I | 0,000 | 0,000 | 0,000 | 0,000 |
+| Overweight_Level_II | 0,000 | 0,000 | 0,000 | 0,000 |
+| Obesity_Type_I | 0,208 | 0,382 | 0,225 | 0,260 |
+| Obesity_Type_II | 0,633 | 0,401 | 0,326 | 0,352 |
+| Obesity_Type_III | 0,565 | 1,000 | 0,377 | 0,622 |
+
+Na Passada 1, cada cluster recebeu um rótulo diferente (`Insufficient_Weight`, `Obesity_Type_I`, `Obesity_Type_II` e `Obesity_Type_III`), mas a classe majoritária ocupa só 22,5% a 37,7% de cada cluster. Na Passada 2, dois clusters foram mapeados para `Obesity_Type_III` e dois para `Obesity_Type_I`, de modo que `Overweight_Level_I` e `Overweight_Level_II` não são previstas.
 
 ### Discussão crítica
 
-Comparar os resultados e discutir a granularidade das classes.
+#### Qual passada gerou grupos mais coerentes?
+
+Pelas métricas, a Passada 2 (k = 7) foi melhor. A acurácia subiu de 0,310 para 0,382, a precisão média de 0,174 para 0,265 e o recall médio de 0,310 para 0,370. Ela também representa 5 das 7 classes, contra 4 na Passada 1. As duas passadas superam o baseline de 0,168 (prever sempre a classe mais frequente), então os clusters carregam alguma informação sobre o nível de obesidade, mas pouca: na melhor das passadas, quase 2 em cada 3 pessoas caem num cluster cuja classe majoritária não é a sua.
+
+A Passada 1 só não fica tão atrás porque, com menos clusters, cada um "cobre" mais classes vizinhas. A pureza dos clusters mostra isso: na Passada 1 a classe majoritária ocupa entre 22,5% e 37,7% de cada cluster, ou seja, nenhum grupo é dominado por uma classe. Na Passada 2 aparecem grupos mais puros, com destaque para o cluster 3 (71,9% `Obesity_Type_III`) e o cluster 1 (52,5% `Obesity_Type_III`). Por isso consideramos a Passada 2 a mais coerente em relação às classes reais, ainda que coerente aqui signifique "menos misturada", não "bem separada".
+
+O ganho da Passada 2, porém, não é uniforme. `Obesity_Type_III` passa a ter recall 1,0, mas `Insufficient_Weight` cai de 0,764 para 0,461 e `Obesity_Type_II` de 0,633 para 0,401, porque essas classes foram divididas entre mais clusters.
+
+#### Por que algumas classes nunca são previstas?
+
+Na Passada 2, dois pares de clusters receberam o mesmo rótulo (dois viraram `Obesity_Type_III` e dois `Obesity_Type_I`). Sobram só 5 rótulos distintos, e `Overweight_Level_I` e `Overweight_Level_II` nunca são previstas (recall 0 nas duas passadas). Essas pessoas estão espalhadas: `Overweight_Level_II` aparece com 55, 66 e 63 registros nos clusters 0, 2 e 6, e em nenhum deles é maioria. Isso faz sentido porque as faixas de sobrepeso ficam no meio da escala de IMC (cerca de 23 a 30) e se sobrepõem às classes vizinhas em todas as variáveis.
+
+#### O que o K-Means realmente agrupou
+
+Olhando os centroides, os clusters seguem eixos que não são o nível de obesidade:
+
+- *Sexo/altura:* na Passada 2, os clusters 2 e 3 têm peso médio parecido (102 kg e 99 kg), mas o cluster 2 tem altura média de 1,79 m e 3% de mulheres, e o cluster 3 tem 1,65 m e 90% de mulheres. Como o mesmo peso numa pessoa mais baixa gera IMC maior, o cluster masculino fica com maioria `Obesity_Type_II` e o feminino com `Obesity_Type_III`. A separação veio da altura, não do grau de obesidade.
+- *Hábitos:* o cluster 4 se diferencia por ter em média 1,2 refeições principais por dia (`NCP`), o cluster 5 pela atividade física alta (`FAF` = 2,1) e o cluster 6 pela idade (37 anos contra cerca de 21–25 nos demais). Nenhum desses eixos coincide com uma faixa de IMC, e por isso esses clusters misturam várias classes.
+
+Ou seja, o K-Means encontrou perfis de estilo de vida e de corpo, que é o que as 8 variáveis descrevem com peso igual, enquanto as classes reais dependem apenas de duas delas (peso e altura, via IMC).
+
+#### Granularidade das classes
+
+As 7 classes são cortes de uma única variável contínua (IMC). As faixas vizinhas são estreitas e sem fronteira natural nos dados: sobrepeso I vai de 22,8 a 28,8 e sobrepeso II de 25,7 a 30,4, por exemplo. Um método não supervisionado não tem como saber onde ficam esses cortes, e as outras 6 variáveis, padronizadas com o mesmo peso, diluem a informação de peso e altura. Os dados parecem sustentar uma divisão mais grosseira (abaixo do peso/normal, sobrepeso, obesidade, obesidade severa) do que as 7 classes, o que também está de acordo com o cotovelo sem dobra nítida.
+
+#### Limitações
+
+- Usamos só as variáveis numéricas; as categóricas (histórico familiar, `FAVC`, transporte, sexo) ficaram de fora e podem ter informação útil.
+- Cerca de 77% do dataset foi gerado sinteticamente (SMOTE) pelos autores. Isso explica valores fracionários em variáveis que deveriam ser discretas (`FCVC`, `NCP`, `FAF`, `TUE`, `CH2O`) e pode criar padrões artificiais.
+- A escolha de k = 4 foi feita pelo cotovelo, que não tem um ponto de inflexão claro.
+- O mapeamento pela classe majoritária permite que vários clusters recebam o mesmo rótulo e deixa classes sem representação, o que penaliza as métricas por classe.
+- O K-Means assume grupos esféricos e de tamanho parecido, o que não precisa valer para estes dados.
 
 ## Parte Específica — Adult
 
