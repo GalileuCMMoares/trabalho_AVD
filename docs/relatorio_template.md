@@ -25,7 +25,28 @@ Ao aplicar a padronizacao com o `StandardScaler`, todas as variáveis numericas 
 
 ### EDA
 
-Preencher a análise estrutural, distribucional, relacional e de outliers. Incluir as visualizações e interpretações escritas pelo grupo.
+As figuras e tabelas desta secao estao no notebook `notebooks/parte_comum/eda.ipynb`.
+
+**1. Estrutura.** O dataset tem 2.111 linhas e 17 colunas, sendo 8 numericas (`Age`, `Height`, `Weight`, `FCVC`, `NCP`, `CH2O`, `FAF`, `TUE`) e 9 categoricas, incluindo a classe `NObeyesdad`. Nao ha valores ausentes, e as 24 linhas duplicadas foram removidas (ver Dataset e preparacao). Na qualidade dos dados, `FCVC`, `NCP`, `CH2O`, `FAF` e `TUE` vem de perguntas com respostas inteiras, mas entre 30,7% e 61,8% dos valores sao fracionarios. Isso e consistente com a informacao do UCI de que cerca de 77% dos registros foram gerados sinteticamente (SMOTE), por interpolacao. Mantivemos essas escalas como numericas, lembrando que os valores intermediarios nao sao respostas reais.
+
+**2. Distribuicoes.**
+- `Age` e concentrada em jovens (metade entre 19,9 e 26 anos, mediana 22,85) e tem cauda longa a direita ate 61 anos.
+- `Height` e aproximadamente simetrica em torno de 1,70 m, e `Weight` vai de 39 a 173 kg sem um unico pico, o que combina com classes que vao de abaixo do peso ate obesidade tipo III.
+- `FCVC`, `CH2O`, `FAF` e `TUE` tem picos nos valores inteiros e valores espalhados entre eles. `NCP` e muito concentrada em 3 refeicoes (cerca de 70% dos registros).
+- Varias categoricas sao muito desbalanceadas (`SMOKE` 97,9% nao, `SCC` 95,4% nao, `FAVC` 88,4% sim, historico familiar 82,5% sim, `CAEC` 84,4% Sometimes), e algumas categorias quase nao tem casos (`CALC` Always com 1 registro, `MTRANS` Bike com 7 e Motorbike com 11).
+- `Gender` (50,4% homens) e as 7 classes (entre 12,8% e 16,8% cada) sao equilibrados, o que e pouco comum em dados reais e e mais um sinal do balanceamento sintetico.
+
+**3. Relacoes.**
+- As correlacoes entre as numericas sao fracas. A maior e entre `Height` e `Weight` (0,46), seguida de `Age` e `TUE` (-0,30) e `Height` e `FAF` (0,29). Nenhum par passa de 0,5, entao nao ha redundancia forte entre as variaveis.
+- Com a classe, `Weight` cresce de forma ordenada (media de 50,0 kg em Insufficient_Weight ate 120,9 kg em Obesity_Type_III), como esperado para classes criadas a partir do IMC. `Height` so se destaca em Obesity_Type_II (media de 1,77 m), `Age` e maior em Overweight_Level_II e Obesity_Type_II, e `FAF` cai de forma geral das classes mais leves para as mais pesadas.
+- Em Obesity_Type_III, `FCVC` e `NCP` valem 3 para todos os registros, o que nao e esperado em dados reais e provavelmente vem da geracao sintetica.
+- Nas categoricas, `Gender` tem a relacao mais forte. Obesity_Type_II e quase so de homens (28% dos homens contra 0,2% das mulheres) e Obesity_Type_III quase so de mulheres (31,2% das mulheres contra 0,1% dos homens), entao nessas classes sexo e grau de obesidade ficam misturados.
+- Quem nao tem historico familiar de sobrepeso esta concentrado em Insufficient_Weight (38,9%) e Normal_Weight (35,6%) e nao aparece em Obesity_Type_III. Quem come entre refeicoes com frequencia esta mais em Insufficient_Weight (49,6%), e quem anda a pe esta mais em Normal_Weight (56,4%), mas esta ultima categoria tem poucos registros.
+
+**4. Outliers.** Pelo IQR (1,5 vez), `NCP` teve 577 registros sinalizados (27,65%), `Age` 167 (8,00%) e `Height` e `Weight` 1 cada. Mantivemos todos os registros.
+- Em `NCP`, cerca de 70% responderam 3 refeicoes, entao os quartis ficam muito proximos (2,70 e 3,00), o IQR e de 0,30 e os limites ficam entre 2,24 e 3,45. Quem respondeu 1, 2 ou 4 refeicoes vira outlier mesmo sendo uma resposta valida (a pergunta vai de 1 a 4).
+- Em `Age`, os valores acima de 35 anos sao pessoas mais velhas, plausiveis na populacao estudada.
+- A maior altura (1,98 m) e o maior peso (173 kg, da classe Obesity_Type_III) sao plausiveis para adultos.
 
 ### K-Means e métricas
 
@@ -71,11 +92,11 @@ Olhando os centroides, os clusters seguem eixos que não são o nível de obesid
 - *Sexo/altura:* na Passada 2, os clusters 2 e 3 têm peso médio parecido (102 kg e 99 kg), mas o cluster 2 tem altura média de 1,79 m e 3% de mulheres, e o cluster 3 tem 1,65 m e 90% de mulheres. Como o mesmo peso numa pessoa mais baixa gera IMC maior, o cluster masculino fica com maioria `Obesity_Type_II` e o feminino com `Obesity_Type_III`. A separação veio da altura, não do grau de obesidade.
 - *Hábitos:* o cluster 4 se diferencia por ter em média 1,2 refeições principais por dia (`NCP`), o cluster 5 pela atividade física alta (`FAF` = 2,1) e o cluster 6 pela idade (37 anos contra cerca de 21–25 nos demais). Nenhum desses eixos coincide com uma faixa de IMC, e por isso esses clusters misturam várias classes.
 
-Ou seja, o K-Means encontrou perfis de estilo de vida e de corpo, que é o que as 8 variáveis descrevem com peso igual, enquanto as classes reais dependem apenas de duas delas (peso e altura, via IMC).
+Ou seja, o K-Means encontrou perfis de estilo de vida e de corpo, que é o que as 8 variáveis descrevem com peso igual, enquanto as classes reais foram definidas a partir de apenas duas delas (peso e altura, via IMC).
 
 #### Granularidade das classes
 
-As 7 classes são cortes de uma única variável contínua (IMC). As faixas vizinhas são estreitas e sem fronteira natural nos dados: sobrepeso I vai de 22,8 a 28,8 e sobrepeso II de 25,7 a 30,4, por exemplo. Um método não supervisionado não tem como saber onde ficam esses cortes, e as outras 6 variáveis, padronizadas com o mesmo peso, diluem a informação de peso e altura. Os dados parecem sustentar uma divisão mais grosseira (abaixo do peso/normal, sobrepeso, obesidade, obesidade severa) do que as 7 classes, o que também está de acordo com o cotovelo sem dobra nítida.
+As classes foram criadas a partir do IMC (segundo a documentacao do dataset, com base nas faixas da OMS e da normativa mexicana), mas nos dados elas nao funcionam como cortes limpos de uma unica variavel. A tabela de IMC por classe (secao 3.3 do notebook `kmeans_metricas.ipynb`) mostra que as faixas de classes vizinhas se sobrepoem, por exemplo sobrepeso I vai de 22,8 a 28,8 e sobrepeso II de 25,7 a 30,4, e o IMC minimo de sobrepeso I (22,8) fica dentro da faixa de peso normal (18,5 a 24,9). Uma explicacao provavel e que cerca de 77% dos registros foram gerados sinteticamente (SMOTE), por interpolacao entre registros, o que pode criar combinacoes de peso e altura fora da faixa da propria classe. Com isso, nem o IMC sozinho separa perfeitamente as classes vizinhas, e o K-Means tem ainda menos chance, porque as outras 6 variaveis, padronizadas com o mesmo peso, diluem a informacao de peso e altura. Os dados parecem sustentar uma divisao mais grosseira (abaixo do peso ou normal, sobrepeso, obesidade e obesidade severa) do que as 7 classes, o que tambem esta de acordo com o cotovelo sem dobra nitida.
 
 #### Limitações
 
