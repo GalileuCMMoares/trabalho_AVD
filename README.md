@@ -69,7 +69,7 @@ Com o dataset local disponivel, execute:
 
     streamlit run src/parte_especifica/dashboard.py
 
-O aplicativo possui filtros de perfil, indicadores, visualizacoes exploratorias, uma aba dedicada a pergunta de pesquisa e exportacao do recorte filtrado.
+O aplicativo tem duas paginas. A pagina da Parte Especifica tem filtros de perfil, indicadores, as seis visualizacoes com suas notas analiticas, uma aba dedicada a pergunta de pesquisa, um explorador de duas variaveis e exportacao do recorte filtrado. A pagina da Parte Comum mostra o Metodo do Cotovelo, os clusters e as classes reais lado a lado para qualquer k de 2 a 10, a matriz de confusao com as metricas e uma animacao da transicao entre as duas passadas do K-Means.
 
 ## Estrutura
 
@@ -80,7 +80,7 @@ O aplicativo possui filtros de perfil, indicadores, visualizacoes exploratorias,
 - notebooks/parte_comum/: notebooks da Parte Comum (eda.ipynb e kmeans_metricas.ipynb).
 - out/: tabelas e figuras geradas pelos notebooks e scripts (versionadas, pois o relatório faz referência a elas). Em out/parte_comum/kmeans/ ficam os resultados do K-Means; em out/parte_especifica/ ficam eda/ (tabelas), figuras/ (EDA) e visualizacoes/ (as seis visualizações).
 - src/parte_comum/: pasta alternativa para scripts da Parte Comum (o grupo optou por notebooks).
-- src/parte_especifica/: download dos dados, EDA (eda.ipynb e eda_inicial.py), visualizações (visualizacoes.py) e dashboard (dashboard.py).
+- src/parte_especifica/: download dos dados, EDA (eda.ipynb e eda_inicial.py), visualizações (visualizacoes.py), dashboard (dashboard.py), rotulos em portugues (traducoes.py) e notas analiticas exibidas no dashboard (notas.py).
 
 ## Uso de IA
 

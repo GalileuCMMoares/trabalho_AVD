@@ -118,9 +118,11 @@ As classes foram criadas a partir do IMC (segundo a documentacao do dataset, com
 
 **Aprovação e fonte.** Dataset validado pela professora. Fonte: UCI Machine Learning Repository, *Adult* (Becker & Kohavi, 1996; DOI 10.24432/C5XW20; CC BY 4.0). Unimos `adult.data` e `adult.test`, totalizando 48.842 instâncias e 14 atributos mais a classe `income` (`<=50K` ou `>50K`), com variáveis inteiras e categóricas. Removemos espaços extras, o ponto final das classes em `adult.test` e marcamos `?` como ausente (`download_data.py`).
 
-**Valores ausentes.** Três colunas têm ausências: `workclass` (2.799; 5,73%), `occupation` (2.809; 5,75%) e `native-country` (857; 1,75%). No total, 3.620 linhas (7,41%) têm ao menos um ausente. Em `workclass` e `occupation` os ausentes ocorrem quase sempre juntos e não são aleatórios: nessas linhas só 9,5% têm renda `>50K`, contra 24,8% nas demais. Em `native-country` a taxa é parecida (25,7% contra 23,9%).
+**Valores ausentes.** Tres colunas tem ausencias, `workclass` (2.799, 5,73%), `occupation` (2.809, 5,75%) e `native-country` (857, 1,75%). No total, 3.620 linhas (7,41%) tem ao menos um ausente.
 
-*Tratamento adotado:* não removemos linhas. Recodificamos os ausentes de `workclass`, `occupation` e `native-country` como a categoria "Desconhecido". Isso preserva 7,4% da base e mantém visível um grupo com perfil próprio de renda; excluir essas linhas enviesaria a análise para empregos formais.
+**Mecanismo de ausencia.** Em `workclass` e `occupation`, os ausentes ocorrem juntos (as 2.799 linhas sem `workclass` tambem nao tem `occupation`) e nao sao aleatorios. Essas linhas tem mais pessoas com ate 25 anos (38,3% contra 18,6%) e com 65 anos ou mais (17,9% contra 3,4%), jornada mediana menor (36 horas contra 40) e muito menos renda alta (9,5% contra 24,8%). Como a ausencia depende de variaveis observadas, como idade e jornada, classificamos o mecanismo como MAR (ausente de forma aleatoria condicionada aos dados observados). O perfil sugere pessoas fora do mercado formal de trabalho, como estudantes e aposentados. Nao da para descartar totalmente MNAR, porque o motivo de nao informar a ocupacao pode estar ligado a propria ocupacao, e isso nao e testavel com os dados. As 10 linhas a mais de `occupation` ausente sao pessoas com `workclass` igual a Never-worked. Quem nunca trabalhou nao tem ocupacao para informar, entao nesse caso a ausencia e estrutural (o valor nao existe) e nao um dado perdido. Em `native-country`, as linhas com ausente tem perfil muito parecido com as demais (idade e jornada medianas iguais, 37 anos e 40 horas, e taxa de renda alta de 25,7% contra 23,9%), o que e compativel com MCAR (ausente completamente ao acaso), ao menos em relacao as variaveis observadas.
+
+*Tratamento adotado.* Nao removemos linhas. Recodificamos os ausentes de `workclass`, `occupation` e `native-country` como a categoria "Desconhecido". Com mecanismo MAR, excluir essas linhas enviesaria a analise, porque retiraria justamente mais jovens, mais idosos e pessoas com menos renda, deixando a base concentrada em empregos formais. A categoria propria preserva os 7,4% de linhas afetadas e mantem visivel um grupo com perfil de renda diferente. Em `native-country`, como a ausencia parece aleatoria e e pequena (1,75%), a mesma recodificacao nao introduz vies relevante.
 
 **Duplicatas.** Há 52 linhas totalmente idênticas. Como a base é amostral e não tem identificador, elas podem ser pessoas distintas com o mesmo perfil, e o impacto é desprezível (0,1%); mantivemos.
 
@@ -159,57 +161,96 @@ Para visualização, `capital-gain` e `capital-loss` serão tratados em escala l
 
 ### Storytelling e visualizações
 
-As seis visualizações estão em `out/parte_especifica/visualizacoes/`. Foram organizadas em quatro peças exploratórias, para entender a base, e duas peças explanatórias, para comunicar a resposta à pergunta de pesquisa.
+#### Raciocinio do storytelling
 
-#### Notas analíticas das visualizações
+**Publico.** A comunicacao e voltada para a equipe de planejamento educacional e empregabilidade definida acima. Sao pessoas que decidem onde investir em programas de formacao e entendem bem de niveis de ensino, mas nao fazem parte do time tecnico. Por isso os graficos usam os nomes dos niveis de ensino em portugues no lugar dos codigos numericos, os explanatorios tem titulos que ja dizem a conclusao e poucos elementos alem dos dados.
 
-**1. Distribuição da faixa de renda — exploratória**  
+**O que a exploracao mostrou.**
+- A base e desbalanceada (76,1% ate US$ 50 mil), entao as comparacoes precisam ser feitas por taxa e nao por contagem.
+- Entre todas as variaveis, a escolaridade e a que mais separa a renda. A taxa de renda alta vai de 1,2% na educacao infantil a 74% na escola profissional.
+- Olhando os niveis em ordem, a taxa fica abaixo de 8% ate a 12a serie, sobe para 16% no ensino medio completo e da um salto na graduacao (41%). A relacao nao e uma subida gradual, ela tem um ponto de virada.
+- Idade, ocupacao, estado civil e sexo tambem se associam a renda, mas nenhuma delas tem uma amplitude tao grande quanto a escolaridade.
+- As horas trabalhadas tem a mesma mediana nas duas faixas de renda (40 horas). A diferenca aparece na cauda de jornadas longas, e o cruzamento com a escolaridade mostra que a jornada aumenta a taxa dentro de cada nivel, mas nao compensa um nivel baixo.
 
-- **O que mostra:** quantidade e percentual das duas classes de renda da base.
-- **Insight:** a base é desbalanceada: aproximadamente 76% dos registros estão em `<=50K` e 24% em `>50K`. Por isso, as comparações posteriores usam taxas, e não somente contagens absolutas.
-- **Motivo da escolha:** barras comparam duas categorias com clareza e sem distorção visual.
+**A historia.** Na base Adult, concluir a graduacao e o ponto de virada da renda. Com graduacao ou mais, 48,1% das pessoas ganham acima de US$ 50 mil, contra 16,0% nos niveis abaixo. Trabalhar mais horas ajuda, mas nao substitui a escolaridade, ja que quem tem ensino medio completo e trabalha 51 horas ou mais (28%) ainda fica abaixo de quem tem graduacao e trabalha 40 horas (37%).
 
-**2. Distribuição de idade por faixa de renda — exploratória**  
+**Por que essa mensagem e a mais relevante para esse publico.** A equipe precisa decidir em que etapa da formacao concentrar esforcos. A mensagem aponta onde a diferenca e maior (a conclusao da graduacao) e evita uma leitura comum e enganosa, a de que jornada longa resolve a renda. Como os dados sao descritivos, deixamos claro nos graficos e no texto que se trata de associacao e nao de causa, porque idade, ocupacao e sexo tambem variam junto com a escolaridade.
 
-- **O que mostra:** distribuição percentual da idade dentro de cada faixa de renda.
-- **Insight:** a distribuição de `>50K` tende a se concentrar em idades maiores que a de `<=50K`, mas existe sobreposição entre os grupos. Assim, idade isolada não separa completamente as faixas de renda.
-- **Motivo da escolha:** histogramas mostram forma, dispersão e sobreposição de uma variável numérica entre grupos.
+**Da exploratoria para a explanatoria.** Na exploracao, o grafico de renda por escolaridade (notebook da EDA) mostrava todas as barras na mesma cor, ordenadas pela taxa, com o tamanho de cada grupo e uma linha de media. Na versao explanatoria (grafico 5) mudamos quatro coisas. Colocamos os niveis na ordem de ensino, para que a posicao mostre onde a taxa muda. Usamos cor so nos niveis de graduacao ou mais. Trocamos o titulo descritivo por um titulo que ja diz a conclusao. E retiramos a grade, mantendo apenas o valor ao lado de cada barra. No mapa de calor (grafico 6), trocamos os codigos de escolaridade pelos nomes dos niveis, fixamos a escala de cor de 0 a 100% e escondemos as celulas com menos de 30 pessoas, que antes apareciam com 0% ou valores extremos e podiam enganar.
 
-**3. Escolaridade por faixa de renda — exploratória**  
+**Atributos pre atentivos usados.**
+- Cor. Vermelho apenas nos niveis de graduacao ou mais e cinza azulado nos demais, para o olho ir direto ao grupo que carrega a mensagem. O corte coincide com os niveis que passam de 40%, entao a cor marca ao mesmo tempo um nivel de ensino e um patamar de renda. O vermelho tambem e a cor da faixa acima de US$ 50 mil em todos os outros graficos, o que mantem o significado da cor no dashboard inteiro.
+- Posicao. As barras seguem a ordem dos niveis de ensino e o eixo comeca em zero, entao o salto na graduacao aparece como uma quebra visivel no comprimento das barras.
+- Intensidade. No mapa de calor, uma unica escala de amarelo a vermelho representa a taxa, e a cor mais forte fica no canto de maior escolaridade e maior jornada.
+- Texto. Os titulos dos graficos explanatorios dizem a conclusao, e os valores aparecem ao lado das barras e dentro das celulas, para que a leitura nao dependa do eixo.
 
-- **O que mostra:** mediana, dispersão e extremos de `education-num` em cada classe de renda.
-- **Insight:** a distribuição de escolaridade de `>50K` fica deslocada para níveis maiores, embora existam registros dos dois grupos em vários níveis educacionais.
-- **Motivo da escolha:** boxplots comparam mediana, quartis e extremos de forma compacta.
+Nao usamos graficos de pizza nem de radar, porque as comparacoes sao entre muitas categorias ordenadas, e barras e mapas de calor permitem comparar comprimentos e posicoes com mais precisao.
 
-**4. Renda acima de US$ 50 mil por ocupação — exploratória**  
+#### Notas analiticas das visualizacoes
 
-- **O que mostra:** proporção de pessoas com renda `>50K` por ocupação, excluindo grupos com poucas observações.
-- **Insight:** as taxas variam entre ocupações, apontando ocupação como variável relevante para aprofundamento.
-- **Motivo da escolha:** barras horizontais acomodam nomes longos e facilitam ordenar muitas categorias.
+As visualizacoes 1 a 6 estao em `out/parte_especifica/visualizacoes/` (geradas por `src/parte_especifica/visualizacoes.py`) e aparecem tambem no dashboard, onde cada grafico tem a sua nota analitica. O dashboard tem ainda dois graficos de apoio (estado civil e jornada), com notas proprias no fim desta secao. Os numeros se referem a base completa, sem filtros.
 
-**5. Taxa de renda acima de US$ 50 mil por escolaridade — explanatória**  
+**1. Distribuicao da faixa de renda (exploratoria)**
 
-- **O que mostra:** taxa de `>50K` em cada categoria de escolaridade.
-- **Insight:** os níveis mais altos de escolaridade apresentam taxas maiores de renda acima de US$ 50 mil na amostra. Esta é a visualização que responde diretamente à pergunta de pesquisa.
-- **Motivo da escolha:** barras ordenadas tornam a comparação entre categorias direta; a cor evidencia o patamar de 40% sem ocultar as demais categorias.
+- **O que mostra.** Quantidade e percentual de pessoas em cada faixa de renda anual.
+- **Insight.** A base e desbalanceada, com 37.155 pessoas (76,1%) ate US$ 50 mil e 11.687 (23,9%) acima. Por isso os demais graficos comparam taxas e distribuicoes em percentual, e nao contagens absolutas.
+- **Por que este grafico.** Barras comparam duas categorias pelo comprimento, e o rotulo com numero e percentual evita depender da leitura do eixo.
 
-**6. Escolaridade, jornada semanal e renda — explanatória**  
+**2. Distribuicao de idade por faixa de renda (exploratoria)**
 
-- **O que mostra:** taxa de `>50K` para combinações de escolaridade numérica e faixas de horas trabalhadas por semana.
-- **Insight:** a associação com renda alta é mais visível em combinações de maior escolaridade e jornadas mais longas. O tamanho amostral de cada célula deve ser considerado na leitura.
-- **Motivo da escolha:** o mapa de calor sintetiza duas dimensões categorizadas e uma medida percentual usando a cor como atributo pré-atentivo.
+- **O que mostra.** Distribuicao da idade dentro de cada faixa de renda, em percentual do proprio grupo.
+- **Insight.** Quem ganha acima de US$ 50 mil e mais velho (mediana de 43 anos, contra 34). A taxa de renda alta e quase nula ate 25 anos (1,8%) e chega ao maximo entre 46 e 55 anos (39,2%). Mesmo assim as duas distribuicoes se sobrepoem bastante, entao a idade sozinha nao separa as faixas.
+- **Por que este grafico.** O histograma mostra forma e sobreposicao de uma variavel numerica, e a normalizacao dentro de cada grupo corrige o desbalanceamento da base.
 
-#### Resposta à pergunta de pesquisa
+**3. Nivel de escolaridade por faixa de renda (exploratoria)**
 
-Na amostra Adult, níveis mais altos de escolaridade estão associados a proporções maiores de pessoas com renda anual acima de US$ 50 mil. Ao combinar escolaridade e jornada semanal, a taxa de renda alta também tende a ser maior nas faixas de jornada mais longas. Esses resultados descrevem associações presentes na base: não demonstram que escolaridade ou horas trabalhadas, isoladamente, causam maior renda, pois idade, ocupação, estado civil e outras características podem estar relacionadas simultaneamente a essas variáveis.
+- **O que mostra.** Mediana, quartis e extremos do nivel de escolaridade em cada faixa de renda.
+- **Insight.** Entre quem ganha ate US$ 50 mil, metade parou no ensino medio completo ou antes. Entre quem ganha acima, a mediana sobe para tecnologo academico e pelo menos um quarto tem graduacao ou mais. A escolaridade e a variavel que mais desloca a distribuicao entre as duas faixas.
+- **Por que este grafico.** O boxplot resume e compara a distribuicao de uma variavel ordenada entre dois grupos de forma compacta.
+
+**4. Taxa de renda acima de US$ 50 mil por ocupacao (exploratoria)**
+
+- **O que mostra.** Taxa de renda acima de US$ 50 mil em cada ocupacao com pelo menos 100 pessoas.
+- **Insight.** A taxa vai de 1,2% no servico domestico e 4,1% em outros servicos ate 45,1% em profissional especializado e 47,8% em gerencia e direcao. Pessoas sem ocupacao informada ficam em 9,4%. A ocupacao tambem separa bem a renda, entao parte da diferenca vista por escolaridade pode passar por ela.
+- **Por que este grafico.** Barras horizontais acomodam nomes longos e, ordenadas pela taxa, facilitam achar os extremos.
+
+**5. Taxa de renda acima de US$ 50 mil por escolaridade (explanatoria)**
+
+- **O que mostra.** Taxa de renda acima de US$ 50 mil em cada nivel de escolaridade, na ordem dos niveis.
+- **Insight.** Ate a 12a serie a taxa fica abaixo de 8% (5,7% no conjunto), sobe para 16% no ensino medio completo e da um salto na graduacao (41%), chegando a 55% no mestrado e a 73% e 74% no doutorado e na escola profissional. Quem tem graduacao ou mais tem taxa de 48,1%, tres vezes a dos demais (16,0%). Este e o grafico que responde diretamente a pergunta de pesquisa.
+- **Por que este grafico.** Com as barras na ordem dos niveis, a posicao mostra em que ponto a taxa muda, e a cor destaca so os niveis de graduacao ou mais, que sao exatamente os que passam de 40%.
+
+**6. Escolaridade, jornada semanal e renda (explanatoria)**
+
+- **O que mostra.** Taxa de renda acima de US$ 50 mil para cada combinacao de escolaridade e faixa de horas semanais. Celulas com menos de 30 pessoas ficam em branco.
+- **Insight.** De forma geral, a taxa sobe com a jornada ate a faixa de 41 a 50 horas e depois praticamente para de subir. A escolaridade pesa mais que a jornada. Quem tem ensino medio completo e trabalha 51 horas ou mais tem 28% de renda alta, menos do que quem tem graduacao e trabalha 40 horas (37%). Ou seja, jornada longa nao compensa escolaridade baixa.
+- **Por que este grafico.** O mapa de calor cruza duas variaveis categorizadas e mostra a taxa pela intensidade da cor. Esconder as celulas pequenas evita que percentuais instaveis chamem atencao.
+
+**Apoio A. Taxa de renda acima de US$ 50 mil por estado civil (dashboard)**
+
+- **O que mostra.** Taxa de renda acima de US$ 50 mil por estado civil, para grupos com pelo menos 100 pessoas.
+- **Insight.** Casados no civil tem 44,6% de renda alta, contra 4,5% de quem nunca casou e 10,1% dos divorciados. Parte dessa diferenca vem da idade, ja que quem nunca casou e bem mais jovem (mediana de 25 anos, contra 42 dos casados no civil).
+- **Por que este grafico.** Mesmo formato do grafico de ocupacao, para facilitar a comparacao entre os dois.
+
+**Apoio B. Distribuicao da jornada semanal por faixa de renda (dashboard)**
+
+- **O que mostra.** Distribuicao das horas trabalhadas por semana em cada faixa de renda, em percentual do proprio grupo.
+- **Insight.** As duas faixas tem mediana de 40 horas, mas 49,1% de quem ganha acima de US$ 50 mil trabalha mais de 40 horas, contra 23,2% de quem ganha ate esse valor. A diferenca esta na cauda de jornadas longas.
+- **Por que este grafico.** O histograma normalizado por grupo mostra onde as distribuicoes se separam sem o efeito do desbalanceamento.
+
+#### Resposta a pergunta de pesquisa
+
+Na base Adult, a escolaridade se associa fortemente a proporcao de pessoas com renda anual acima de US$ 50 mil, e essa associacao tem um ponto de virada na graduacao. A taxa fica abaixo de 8% ate a 12a serie, chega a 16% no ensino medio completo e sobe para 41% na graduacao, 55% no mestrado e 73% a 74% no doutorado e na escola profissional. Quem tem graduacao ou mais tem taxa de 48,1%, tres vezes a dos demais niveis (16,0%). As horas trabalhadas contextualizam essa relacao. Dentro de cada nivel, a taxa sobe com a jornada ate cerca de 41 a 50 horas, mas a jornada nao compensa a escolaridade, ja que ensino medio completo com 51 horas ou mais (28%) ainda fica abaixo de graduacao com 40 horas (37%). Esses resultados descrevem associacoes na amostra e nao demonstram causa, porque idade, ocupacao, estado civil e sexo variam junto com a escolaridade e a jornada.
 
 ### Dashboard
 
-O dashboard é executado com:
+O dashboard e executado com
 
     streamlit run src/parte_especifica/dashboard.py
 
-Ele reúne os indicadores da amostra filtrada, a exploração por ocupação, estado civil, escolaridade e jornada semanal, além de uma aba dedicada à pergunta de pesquisa. Os filtros de sexo, tipo de trabalho, idade e horas por semana atualizam todos os gráficos e indicadores. A aplicação também permite exportar o recorte filtrado em CSV.
+Ele tem duas paginas. A pagina da Parte Especifica reune os indicadores da amostra filtrada e cinco abas. Visao geral (graficos 1 e 2), Exploracao (graficos 3 e 4 e os graficos de apoio de estado civil e jornada), Pergunta de pesquisa (graficos 5 e 6), Explorar duas variaveis e Dados. Os filtros de sexo, tipo de trabalho, idade e horas por semana atualizam todos os graficos e indicadores da pagina, inclusive o titulo do grafico 5, que recalcula as taxas do recorte. Cada grafico tem um botao com a sua nota analitica. Na aba Explorar duas variaveis, o usuario escolhe quaisquer duas variaveis e o grafico se adapta ao tipo delas (mapa de densidade para duas numericas, boxplot para numerica com categorica e barras empilhadas em 100% para duas categoricas), com opcao de separar por faixa de renda. A aba Dados permite exportar o recorte filtrado em CSV.
+
+A segunda pagina e dedicada a Parte Comum. Ela mostra o Metodo do Cotovelo com as duas passadas marcadas, um controle para escolher k de 2 a 10 com os clusters e as classes reais lado a lado na mesma projecao PCA, a matriz de confusao e as metricas do k escolhido, e uma animacao da transicao entre a Passada 1 (k = 4) e a Passada 2 (k = 7).
 
 ## Uso de IA
 
