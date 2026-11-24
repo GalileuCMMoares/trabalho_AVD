@@ -1,0 +1,21 @@
+variavel,preprocessamento
+Gender,Binária (0/1) + StandardScaler
+Age,Numérica + StandardScaler
+Height,Numérica + StandardScaler
+Weight,Numérica + StandardScaler
+family_history_with_overweight,Binária (0/1) + StandardScaler
+FAVC,Binária (0/1) + StandardScaler
+FCVC,Numérica + StandardScaler
+NCP,Numérica + StandardScaler
+CAEC,Ordinal (0-3) + StandardScaler
+SMOKE,Binária (0/1) + StandardScaler
+CH2O,Numérica + StandardScaler
+SCC,Binária (0/1) + StandardScaler
+FAF,Numérica + StandardScaler
+TUE,Numérica + StandardScaler
+CALC,Ordinal (0-3) + StandardScaler
+MTRANS_Automobile,OneHotEncoder (MTRANS) + StandardScaler
+MTRANS_Bike,OneHotEncoder (MTRANS) + StandardScaler
+MTRANS_Motorbike,OneHotEncoder (MTRANS) + StandardScaler
+MTRANS_Public_Transportation,OneHotEncoder (MTRANS) + StandardScaler
+MTRANS_Walking,OneHotEncoder (MTRANS) + StandardScaler
