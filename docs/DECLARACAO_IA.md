@@ -32,11 +32,17 @@ Declaro que **todas as decisões analíticas e metodológicas principais foram t
 
 ### 2. Galileu Calaça Menezes de Moraes
 
-**Ferramenta utilizada:** *[Preencher ou indicar "Não utilizou IA"]*  
-**Etapa do projeto:** *[Preencher]*
+**Ferramenta utilizada:** Claude Code, Codex 
+
+**Etapa do projeto:** *Metricas e Matriz de confusão, validação tecnica e revisão do projeto
 
 **Finalidade e forma de utilização:**  
-*[Descrever como a IA foi utilizada dentro das regras permitidas ou declarar que não houve uso.]*
+Usei o Claude Code e Codex como apoio tecnico para escrita do codigo, para validar a coerencia das minhas interpretações e coerencia referente ao contexto geral do projeto, fiz uma revisão de conscistencia do projeto como um todo para manter o sentido e direcionamento das interpretações ao longo do projeto como um todo. A ferramenta foi utilizada para encontar e destacar as incoerencias, não para fazer as correções por conta propria o realizar as interpretações.
+
+**Declaração de autoria e tomada de decisão:**  
+Declaro que o uso do Claude e Codex foi restrito à revisão de conformidade do projeto com os requisitos e ao apoio técnico com o código, sem o uso de IA para gerar análises, interpretações de gráficos, discussões, conclusões, notas analíticas ou a narrativa do storytelling. As decisões analíticas e metodológicas da Parte Específica, as interpretações dos resultados, as justificativas apresentadas no relatório e as conclusões sobre os dados são de responsabilidade do grupo.
+
+
 
 ---
 
@@ -78,7 +84,7 @@ ___________________________________________________
 **João Pedro Aguiar Morais**
 
 <br>
-
+Galileu C. M. Moraes
 ___________________________________________________  
 **Galileu Calaça Menezes de Moraes**
 
