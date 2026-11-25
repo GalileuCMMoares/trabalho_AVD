@@ -2,7 +2,7 @@
 
 - download_data.py: baixa do UCI e cria data/parte_especifica/adult.csv.
 - eda_inicial.py: gera tabelas descritivas em out/parte_especifica/eda/.
-- eda.ipynb: EDA do Adult (estrutura, distribuições, relações e outliers); grava as figuras em out/parte_especifica/figuras/.
+- A EDA do Adult (notebook) fica em notebooks/parte_especifica/eda.ipynb.
 - visualizacoes.py: gera as seis visualizações em out/parte_especifica/visualizacoes/.
 - dashboard.py: dashboard em Streamlit (pagina da Parte Especifica e pagina da Parte Comum).
 - traducoes.py: rotulos em portugues das categorias do Adult, usados no dashboard e nas figuras.

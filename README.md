@@ -51,9 +51,9 @@ As tabelas são gravadas em out/parte_especifica/eda/. O script gera apenas tabe
 
 ### Executar a EDA do Adult (notebook)
 
-O notebook da Parte Específica fica em `src/parte_especifica/eda.ipynb`, conforme a estrutura do enunciado. Ele contém o código e a análise; os arquivos gerados ficam em `out/parte_especifica/`.
+O notebook da Parte Específica fica em `notebooks/parte_especifica/eda.ipynb`, junto dos notebooks da Parte Comum. Ele contém o código e a análise; os arquivos gerados ficam em `out/parte_especifica/`.
 
-    jupyter notebook src/parte_especifica/eda.ipynb
+    jupyter notebook notebooks/parte_especifica/eda.ipynb
 
 As figuras do notebook são gravadas em out/parte_especifica/figuras/. O notebook localiza a raiz do projeto sozinho, então pode ser aberto de qualquer pasta.
 
@@ -80,9 +80,10 @@ O aplicativo tem duas paginas. A pagina da Parte Especifica tem filtros de perfi
 - docs/relatorio_template.md: roteiro para o relatório.
 - docs/DECLARACAO_IA.md: rascunho da declaração de uso de IA (exportar assinada como docs/DECLARACAO_IA.pdf para entrega).
 - notebooks/parte_comum/: notebooks da Parte Comum (eda.ipynb e kmeans_metricas.ipynb).
+- notebooks/parte_especifica/: notebook da EDA do Adult (eda.ipynb).
 - out/: tabelas e figuras geradas pelos notebooks e scripts (versionadas, pois o relatório faz referência a elas). Em out/parte_comum/kmeans/ ficam os resultados do K-Means; em out/parte_especifica/ ficam eda/ (tabelas), figuras/ (EDA) e visualizacoes/ (as seis visualizações).
 - src/parte_comum/: pasta alternativa para scripts da Parte Comum (o grupo optou por notebooks).
-- src/parte_especifica/: download dos dados, EDA (eda.ipynb e eda_inicial.py), visualizações (visualizacoes.py), dashboard (dashboard.py), rotulos em portugues (traducoes.py) e notas analiticas exibidas no dashboard (notas.py).
+- src/parte_especifica/: download dos dados, tabelas de apoio da EDA (eda_inicial.py), visualizações (visualizacoes.py), dashboard (dashboard.py), rotulos em portugues (traducoes.py) e notas analiticas exibidas no dashboard (notas.py).
 
 ## Uso de IA
 
