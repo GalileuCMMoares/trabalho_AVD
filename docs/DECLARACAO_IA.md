@@ -32,11 +32,17 @@ Declaro que **todas as decisões analíticas e metodológicas principais foram t
 
 ### 2. Galileu Calaça Menezes de Moraes
 
-**Ferramenta utilizada:** *[Preencher ou indicar "Não utilizou IA"]*  
-**Etapa do projeto:** *[Preencher]*
+**Ferramenta utilizada:** Claude Code, Codex 
+
+**Etapa do projeto:** *Metricas e Matriz de confusão, validação tecnica e revisão do projeto
 
 **Finalidade e forma de utilização:**  
-*[Descrever como a IA foi utilizada dentro das regras permitidas ou declarar que não houve uso.]*
+Usei o Claude Code e Codex como apoio tecnico para escrita do codigo, para validar a coerencia das minhas interpretações e coerencia referente ao contexto geral do projeto, fiz uma revisão de conscistencia do projeto como um todo para manter o sentido e direcionamento das interpretações ao longo do projeto como um todo. A ferramenta foi utilizada para encontar e destacar as incoerencias, não para fazer as correções por conta propria o realizar as interpretações.
+
+**Declaração de autoria e tomada de decisão:**  
+Declaro que o uso do Claude e Codex foi restrito à revisão de conformidade do projeto com os requisitos e ao apoio técnico com o código, sem o uso de IA para gerar análises, interpretações de gráficos, discussões, conclusões, notas analíticas ou a narrativa do storytelling. As decisões analíticas e metodológicas da Parte Específica, as interpretações dos resultados, as justificativas apresentadas no relatório e as conclusões sobre os dados são de responsabilidade do grupo.
+
+
 
 ---
 
@@ -46,7 +52,7 @@ Declaro que **todas as decisões analíticas e metodológicas principais foram t
 **Etapa do projeto:** Visualizações e Dashboard com Streamlit 
 
 **Finalidade e forma de utilização:**  
-Após o grupo definir as seis visualizações da Parte Específica (quatro exploratórias e duas explanatórias)utilizei o Codex como apoio técnico para estruturar os scripts `visualizacoes.py`, responsáveis pela geração dos gráficos. Em seguida, utilizei a ferramenta para implementar o dashboard em Streamlit (`dashboard.py`), com filtros interativos, indicadores, gráficos e exportação do recorte filtrado em CSV. O dashboard calcula e exibe as visualizações diretamente a partir dos dados filtrados.
+Após o grupo definir as seis visualizações da Parte Específica (quatro exploratórias e duas explanatórias) utilizei o Codex como apoio técnico para estruturar os scripts `visualizacoes.py`, responsáveis pela geração dos gráficos. Em seguida, utilizei a ferramenta para implementar o dashboard em Streamlit (`dashboard.py`), com filtros interativos, indicadores, gráficos e exportação do recorte filtrado em CSV. O dashboard calcula e exibe as visualizações diretamente a partir dos dados filtrados.
 
 **Declaração de autoria e tomada de decisão:**  
 Declaro que as decisões analíticas e metodológicas da Parte Específica foram tomadas por mim. A definição da pergunta de pesquisa, a seleção das seis visualizações, a escolha dos filtros do dashboard e as decisões de tratamento dos dados foram discutidas, revisadas e validadas pelos integrantes. O uso do Codex foi restrito ao apoio técnico na implementação dos scripts de visualização e do dashboard em Streamlit. A interpretação dos resultados da EDA, a avaliação dos outliers, as justificativas apresentadas no relatório e as conclusões sobre os dados são de responsabilidade do grupo.
@@ -78,16 +84,16 @@ ___________________________________________________
 **João Pedro Aguiar Morais**
 
 <br>
-
+Galileu C. M. Moraes
 ___________________________________________________  
 **Galileu Calaça Menezes de Moraes**
 
 <br>
-                      CaioGR
+
 ___________________________________________________  
 **Caio Guimarães Rocha**
 
 <br>
-                      MateusAR
+
 ___________________________________________________  
 **Mateus de Almeida Ribeiro**

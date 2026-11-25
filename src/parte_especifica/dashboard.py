@@ -11,6 +11,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from scipy.optimize import linear_sum_assignment
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -19,10 +20,13 @@ from notas import NOTAS
 from traducoes import (
     COR_CONTEXTO,
     COR_DESTAQUE,
+    CORES_ESCOLARIDADE_AGRUPADA,
     CORES_RENDA,
     ESCOLARIDADE,
     FAIXAS_HORAS,
     ORDEM_ESCOLARIDADE,
+    ORDEM_ESCOLARIDADE_AGRUPADA,
+    ORDEM_CODIGOS_ESCOLARIDADE,
     ORDEM_RENDA,
     inteiro,
     pct,
@@ -45,7 +49,25 @@ CLASSES_OBESITY = [
     "Insufficient_Weight", "Normal_Weight", "Overweight_Level_I", "Overweight_Level_II",
     "Obesity_Type_I", "Obesity_Type_II", "Obesity_Type_III",
 ]
+# Nomes em portugues e cores na ordem do IMC (azul = abaixo do peso, vermelho = obesidade III), iguais aos da EDA
+NOMES_CLASSES = {
+    "Insufficient_Weight": "Abaixo do peso", "Normal_Weight": "Peso normal",
+    "Overweight_Level_I": "Sobrepeso I", "Overweight_Level_II": "Sobrepeso II",
+    "Obesity_Type_I": "Obesidade I", "Obesity_Type_II": "Obesidade II", "Obesity_Type_III": "Obesidade III",
+}
+ORDEM_NOMES_CLASSES = [NOMES_CLASSES[c] for c in CLASSES_OBESITY]
+CORES_CLASSES = px.colors.sample_colorscale("RdYlBu_r", [i / 6 for i in range(7)])
 K_LIVRE, K_FIXO = 4, 7
+ROTULOS_ESCOLARIDADE_CURTOS = [
+    "Até 8ª série", "9ª–12ª sem diploma", "Ensino médio completo",
+    "Faculdade / associate", "Bacharelado ou mais",
+]
+MACRO_CLASSES = {
+    "Insufficient_Weight": "Abaixo do Peso", "Normal_Weight": "Normal",
+    "Overweight_Level_I": "Sobrepeso", "Overweight_Level_II": "Sobrepeso",
+    "Obesity_Type_I": "Obesidade", "Obesity_Type_II": "Obesidade", "Obesity_Type_III": "Obesidade",
+}
+ORDEM_MACRO = ["Abaixo do Peso", "Normal", "Sobrepeso", "Obesidade"]
 
 st.set_page_config(page_title="Projeto AVD", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 
@@ -104,17 +126,35 @@ def histograma_por_renda(df: pd.DataFrame, coluna: str, rotulo: str, titulo: str
         df,
         x=coluna,
         color="renda",
-        barmode="overlay",
+        facet_row="renda",
         histnorm="percent",
         nbins=nbins,
-        opacity=0.6,
         color_discrete_map=CORES_RENDA,
         category_orders={"renda": ORDEM_RENDA},
         labels={coluna: rotulo, "renda": "Faixa de renda"},
         title=titulo,
     )
-    fig.update_layout(yaxis_title="% dentro de cada faixa de renda")
+    fig.for_each_annotation(lambda anotacao: anotacao.update(text=anotacao.text.split("=")[-1], textangle=0))
+    fig.update_yaxes(matches="y", title_text="% da faixa de renda")
+    fig.update_layout(showlegend=False, height=650)
     mostrar(fig)
+    st.caption("Cada painel mostra a distribuição percentual dentro de uma faixa de renda; os eixos usam a mesma escala.")
+
+
+def grafico_jornada_por_renda(df: pd.DataFrame) -> None:
+    """Compara distribuicoes em paineis separados, com escala comum."""
+    fig = px.histogram(
+        df, x="hours-per-week", color="renda", facet_col="renda",
+        histnorm="percent", nbins=40, color_discrete_map=CORES_RENDA,
+        category_orders={"renda": ORDEM_RENDA},
+        labels={"hours-per-week": "Horas trabalhadas por semana", "renda": "Faixa de renda"},
+        title="Distribuição da jornada semanal por faixa de renda",
+    )
+    fig.for_each_annotation(lambda anotacao: anotacao.update(text=anotacao.text.split("=")[-1]))
+    fig.update_yaxes(matches="y", title_text="% dentro da faixa de renda")
+    fig.update_layout(showlegend=False)
+    mostrar(fig)
+    st.caption("Cada painel mostra percentuais calculados dentro da respectiva faixa de renda, usando a mesma escala vertical.")
 
 
 def grafico_distribuicao_renda(df: pd.DataFrame) -> None:
@@ -138,82 +178,89 @@ def grafico_distribuicao_renda(df: pd.DataFrame) -> None:
 
 
 def grafico_escolaridade_box(df: pd.DataFrame) -> None:
-    fig = px.box(
-        df,
-        x="renda",
-        y="education-num",
+    tabela = df.groupby(["escolaridade_agrupada", "renda"], observed=True).size().reset_index(name="pessoas")
+    tabela["percentual"] = tabela["pessoas"] / tabela.groupby("escolaridade_agrupada", observed=True)["pessoas"].transform("sum") * 100
+    fig = px.bar(
+        tabela,
+        x="percentual",
+        y="escolaridade_agrupada",
         color="renda",
+        orientation="h",
         color_discrete_map=CORES_RENDA,
-        category_orders={"renda": ORDEM_RENDA},
-        labels={"renda": "Faixa de renda anual", "education-num": "Nivel de escolaridade"},
-        title="Nivel de escolaridade por faixa de renda",
+        category_orders={"renda": ORDEM_RENDA, "escolaridade_agrupada": ORDEM_ESCOLARIDADE_AGRUPADA},
+        hover_data={"pessoas": True, "percentual": ":.1f"},
+        labels={"renda": "Faixa de renda anual", "escolaridade_agrupada": "Escolaridade agrupada", "percentual": "% de pessoas no nivel", "pessoas": "Pessoas"},
+        title="Faixa de renda em cada nivel de escolaridade",
     )
-    fig.update_yaxes(tickvals=list(ESCOLARIDADE), ticktext=ORDEM_ESCOLARIDADE)
-    fig.update_layout(showlegend=False, height=540)
+    fig.update_layout(barmode="stack", height=650, xaxis_range=[0, 100])
+    fig.update_yaxes(categoryorder="array", categoryarray=ORDEM_ESCOLARIDADE_AGRUPADA,
+                     tickmode="array", tickvals=ORDEM_ESCOLARIDADE_AGRUPADA,
+                     ticktext=ROTULOS_ESCOLARIDADE_CURTOS)
     mostrar(fig)
+    st.caption("Cada barra representa 100% das pessoas naquele nivel de escolaridade no recorte selecionado.")
+    st.caption("Categorias agrupadas a partir da classificação dos EUA, sem equivalência formal com o sistema brasileiro. 'Faculdade sem diploma ou associate degree' reúne Some-college, Assoc-voc e Assoc-acdm.")
 
 
 def grafico_pergunta(df: pd.DataFrame) -> None:
-    tabela = taxa_por(df, "education-num").sort_values("education-num")
-    tabela["escolaridade"] = tabela["education-num"].map(ESCOLARIDADE)
-    tabela["grupo"] = np.where(tabela["education-num"] >= 13, "Graduacao ou mais", "Abaixo da graduacao")
+    tabela = taxa_por(df, "escolaridade_agrupada")
+    tabela["grupo"] = np.where(tabela["escolaridade_agrupada"] == ORDEM_ESCOLARIDADE_AGRUPADA[-1], "Bacharelado ou mais", "Abaixo do bacharelado")
     sup = df.loc[df["graduacao_ou_mais"], "alta_renda"]
     inf = df.loc[~df["graduacao_ou_mais"], "alta_renda"]
     if len(sup) and len(inf):
-        titulo = (f"Com graduacao ou mais, {pct(sup.mean())} tem renda acima de US$ 50 mil<br>"
-                  f"contra {pct(inf.mean())} nos niveis abaixo da graduacao")
+        titulo = (f"Com bacharelado ou mais, {pct(sup.mean())} tem renda acima de US$ 50 mil<br>"
+                  f"contra {pct(inf.mean())} nos grupos abaixo do bacharelado")
     else:
         titulo = "Taxa de renda acima de US$ 50 mil por escolaridade"
     fig = px.bar(
         tabela,
         x="percentual",
-        y="escolaridade",
+        y="escolaridade_agrupada",
         orientation="h",
         color="grupo",
-        color_discrete_map={"Graduacao ou mais": COR_DESTAQUE, "Abaixo da graduacao": COR_CONTEXTO},
-        category_orders={"escolaridade": ORDEM_ESCOLARIDADE, "grupo": ["Graduacao ou mais", "Abaixo da graduacao"]},
+        color_discrete_map={"Bacharelado ou mais": COR_DESTAQUE, "Abaixo do bacharelado": COR_CONTEXTO},
+        category_orders={"escolaridade_agrupada": ORDEM_ESCOLARIDADE_AGRUPADA, "grupo": ["Bacharelado ou mais", "Abaixo do bacharelado"]},
         hover_data={"pessoas": ":,", "grupo": False},
-        labels={"percentual": "% com renda acima de US$ 50 mil", "escolaridade": "Escolaridade", "pessoas": "Pessoas"},
+        labels={"percentual": "% com renda acima de US$ 50 mil", "escolaridade_agrupada": "Escolaridade agrupada (EUA)", "pessoas": "Pessoas"},
         title=titulo,
     )
     fig.update_traces(texttemplate="%{x:.0f}%", textposition="outside", cliponaxis=False)
     fig.update_layout(height=580, legend_title_text="", xaxis_showgrid=False, xaxis_range=[0, 100])
+    fig.update_yaxes(categoryorder="array", categoryarray=ORDEM_ESCOLARIDADE_AGRUPADA,
+                     tickmode="array", tickvals=ORDEM_ESCOLARIDADE_AGRUPADA,
+                     ticktext=ROTULOS_ESCOLARIDADE_CURTOS)
     mostrar(fig)
+    st.caption("Categorias da base americana agrupadas sem equivalência formal com o sistema brasileiro.")
 
 
 def grafico_mapa_calor(df: pd.DataFrame) -> None:
+    """Taxa de renda alta por faixa de horas, uma linha por grupo de escolaridade."""
+    # [IA] Claude Code - troca do mapa de calor por linhas, pedida no feedback da professora
     faixa = df["faixa_horas"].astype(str)
-    taxa = pd.crosstab(df["education-num"], faixa, values=df["alta_renda"], aggfunc="mean").reindex(columns=FAIXAS_HORAS)
-    contagem = pd.crosstab(df["education-num"], faixa).reindex(index=taxa.index, columns=FAIXAS_HORAS).fillna(0)
+    taxa = pd.crosstab(df["escolaridade_agrupada"], faixa, values=df["alta_renda"], aggfunc="mean").reindex(
+        index=ORDEM_ESCOLARIDADE_AGRUPADA, columns=FAIXAS_HORAS)
+    contagem = pd.crosstab(df["escolaridade_agrupada"], faixa).reindex(index=taxa.index, columns=FAIXAS_HORAS).fillna(0)
     z = (taxa * 100).where(contagem >= MINIMO_CELULA)
-    niveis = [ESCOLARIDADE[n] for n in z.index]
-    texto = z.map(lambda v: "" if pd.isna(v) else f"{v:.0f}")
-    fig = go.Figure(
-        go.Heatmap(
-            z=z.to_numpy(),
-            x=FAIXAS_HORAS,
-            y=niveis,
-            text=texto.to_numpy(),
-            texttemplate="%{text}",
-            customdata=contagem.to_numpy().astype(int),
-            colorscale="YlOrRd",
-            zmin=0,
-            zmax=100,
-            hoverongaps=False,
-            colorbar=dict(title="% com renda<br>acima de<br>US$ 50 mil"),
-            hovertemplate="%{y}<br>Jornada %{x} horas<br>%{z:.1f}% com renda acima de US$ 50 mil"
+    fig = go.Figure()
+    for grupo, curto in zip(ORDEM_ESCOLARIDADE_AGRUPADA, ROTULOS_ESCOLARIDADE_CURTOS):
+        forte = grupo == ORDEM_ESCOLARIDADE_AGRUPADA[-1]
+        fig.add_trace(go.Scatter(
+            x=FAIXAS_HORAS, y=z.loc[grupo].to_numpy(), name=curto, mode="lines+markers",
+            line=dict(color=CORES_ESCOLARIDADE_AGRUPADA[grupo], width=4 if forte else 2.5),
+            customdata=contagem.loc[grupo].to_numpy().astype(int),
+            hovertemplate=f"{curto}<br>Jornada %{{x}} horas<br>%{{y:.1f}}% com renda acima de US$ 50 mil"
                           "<br>%{customdata} pessoas<extra></extra>",
-        )
-    )
+        ))
     fig.update_layout(
-        title="Renda alta e mais frequente onde escolaridade e jornada sao maiores",
+        title="Jornada longa nao compensa escolaridade baixa",
         xaxis_title="Horas trabalhadas por semana",
-        yaxis_title="Escolaridade",
-        height=580,
+        yaxis_title="% com renda acima de US$ 50 mil",
+        yaxis_range=[0, 80],
+        legend_title_text="Escolaridade",
+        legend_traceorder="reversed",
+        height=560,
     )
-    fig.update_yaxes(categoryorder="array", categoryarray=niveis)
     mostrar(fig)
-    st.caption(f"Celulas com menos de {MINIMO_CELULA} pessoas no recorte ficam em branco para evitar percentuais instaveis.")
+    st.caption(f"Pontos com menos de {MINIMO_CELULA} pessoas no recorte sao omitidos para evitar percentuais instaveis.")
 
 
 VARIAVEIS = {
@@ -242,57 +289,67 @@ def ordem_categorias(df: pd.DataFrame, coluna: str) -> list:
     return df[coluna].astype(str).value_counts().index.tolist()
 
 
+def categorias_explorador(df: pd.DataFrame, coluna: str) -> tuple[pd.Series, list[str]]:
+    """Prepara categorias ordenadas para os graficos de composicao."""
+    if coluna == "age":
+        limites, nomes = [16, 25, 35, 45, 55, 65, float("inf")], ["17–25", "26–35", "36–45", "46–55", "56–65", "66 ou mais"]
+    elif coluna == "hours-per-week":
+        return df["faixa_horas"].astype("string").fillna("Desconhecido"), FAIXAS_HORAS
+    elif coluna == "education-num" or coluna == "escolaridade":
+        return df["escolaridade_agrupada"].astype("string").fillna("Desconhecido"), ORDEM_ESCOLARIDADE_AGRUPADA
+    elif coluna in ("capital-gain", "capital-loss"):
+        limites, nomes = [-float("inf"), 0, 5000, 10000, float("inf")], ["Sem valor", "1–5.000", "5.001–10.000", "Acima de 10.000"]
+    else:
+        valores = df[coluna].astype("string").fillna("Desconhecido")
+        ordem = ordem_categorias(df, coluna)
+        if "Desconhecido" in valores.values and "Desconhecido" not in ordem:
+            ordem.append("Desconhecido")
+        return valores, ordem
+    valores = pd.cut(df[coluna], bins=limites, labels=nomes, include_lowest=True)
+    return valores.astype("string").fillna("Desconhecido"), nomes
+
+
 def explorador(df: pd.DataFrame) -> None:
-    st.subheader("Explorar a relacao entre duas variaveis")
-    st.caption("Escolha duas variaveis e o grafico se ajusta ao tipo delas. Os filtros da barra lateral continuam valendo.")
+    st.subheader("Explorar a relação entre duas variáveis")
+    st.caption("Todos os cruzamentos usam barras empilhadas. Variáveis numéricas são apresentadas em faixas fixas.")
     nomes = list(VARIAVEIS)
     esquerda, direita, extra = st.columns((1, 1, 1))
-    nome_a = esquerda.selectbox("Primeira variavel", nomes, index=nomes.index("Escolaridade"))
-    nome_b = direita.selectbox("Segunda variavel", nomes, index=nomes.index("Horas por semana"))
+    nome_a = esquerda.selectbox("Primeira variável", nomes, index=nomes.index("Escolaridade"))
+    nome_b = direita.selectbox("Segunda variável", nomes, index=nomes.index("Horas por semana"))
     separar = extra.checkbox("Separar por faixa de renda", value=False)
     if nome_a == nome_b:
-        st.info("Escolha duas variaveis diferentes.")
+        st.info("Escolha duas variáveis diferentes.")
         return
-    (col_a, tipo_a), (col_b, tipo_b) = VARIAVEIS[nome_a], VARIAVEIS[nome_b]
-    separar = separar and "renda" not in (col_a, col_b)
 
-    if tipo_a == "num" and tipo_b == "num":
-        fig = px.density_heatmap(
-            df, x=col_a, y=col_b, nbinsx=40, nbinsy=40, color_continuous_scale="Blues",
-            facet_col="renda" if separar else None, category_orders={"renda": ORDEM_RENDA},
-            labels={col_a: nome_a, col_b: nome_b, "renda": "Faixa de renda"},
-            title=f"{nome_a} e {nome_b} (concentracao de pessoas)",
-        )
-        fig.update_coloraxes(colorbar_title="Pessoas")
-        mostrar(fig)
-        correlacao = df[col_a].corr(df[col_b])
-        st.metric("Correlacao de Pearson", f"{correlacao:.2f}".replace(".", ","))
-    elif tipo_a == "cat" and tipo_b == "cat":
-        tabela = pd.crosstab(df[col_a].astype(str), df[col_b].astype(str), normalize="index") * 100
-        longo = tabela.reset_index().melt(id_vars=col_a, var_name=col_b, value_name="percentual")
-        ordem_a = ordem_categorias(df, col_a)
+    col_a, _ = VARIAVEIS[nome_a]
+    col_b, _ = VARIAVEIS[nome_b]
+    if separar and "renda" in (col_a, col_b):
+        st.caption("A separação adicional por renda não se aplica quando a renda já é uma das variáveis.")
+        separar = False
+
+    valores_a, ordem_a = categorias_explorador(df, col_a)
+    valores_b, ordem_b = categorias_explorador(df, col_b)
+    dados = pd.DataFrame({"primeira": valores_a, "segunda": valores_b, "renda": df["renda"].astype("string")}, index=df.index)
+    grupos_renda = [r for r in ORDEM_RENDA if (dados["renda"] == r).any()] if separar else [None]
+    for renda in grupos_renda:
+        recorte = dados.loc[dados["renda"] == renda] if renda else dados
+        tabela = recorte.groupby(["primeira", "segunda"], observed=True, dropna=False).size().reset_index(name="pessoas")
+        tabela["percentual"] = tabela["pessoas"] / tabela.groupby("primeira")["pessoas"].transform("sum") * 100
+        titulo = f"{nome_b} por {nome_a}" + (f" — {renda}" if renda else "")
         fig = px.bar(
-            longo, x="percentual", y=col_a, color=col_b, orientation="h",
-            category_orders={col_a: ordem_a, col_b: ordem_categorias(df, col_b)},
+            tabela, x="percentual", y="primeira", color="segunda", orientation="h",
+            category_orders={"primeira": ordem_a, "segunda": ordem_b},
             color_discrete_map=CORES_RENDA if col_b == "renda" else None,
-            labels={"percentual": "% dentro de cada grupo", col_a: nome_a, col_b: nome_b},
-            title=f"Composicao de {nome_b.lower()} em cada grupo de {nome_a.lower()}",
+            labels={"percentual": "% dentro do grupo", "primeira": nome_a, "segunda": nome_b, "pessoas": "Pessoas"},
+            hover_data={"pessoas": True, "percentual": ":.1f"}, title=titulo,
         )
-        fig.update_layout(barmode="stack", height=max(400, 32 * len(ordem_a) + 160), xaxis_range=[0, 100])
+        fig.update_layout(barmode="stack", height=max(400, 38 * len(ordem_a) + 170), xaxis_range=[0, 100])
+        fig.update_yaxes(categoryorder="array", categoryarray=list(reversed(ordem_a)))
         mostrar(fig)
-        st.caption("Cada barra soma 100%.")
-    else:
-        col_cat, nome_cat, col_num, nome_num = (col_a, nome_a, col_b, nome_b) if tipo_a == "cat" else (col_b, nome_b, col_a, nome_a)
-        ordem = ordem_categorias(df, col_cat)
-        fig = px.box(
-            df.assign(**{col_cat: df[col_cat].astype(str)}), x=col_num, y=col_cat, orientation="h",
-            color="renda" if separar else None, color_discrete_map=CORES_RENDA,
-            category_orders={col_cat: ordem, "renda": ORDEM_RENDA},
-            labels={col_num: nome_num, col_cat: nome_cat, "renda": "Faixa de renda"},
-            title=f"{nome_num} por {nome_cat.lower()}",
-        )
-        fig.update_layout(height=max(400, 34 * len(ordem) + 160))
-        mostrar(fig)
+
+    st.caption("Cada barra soma 100% dentro da primeira variável" + (" e da faixa de renda indicada." if separar else ".") +
+               " Passe o mouse sobre os segmentos para ver o percentual e o número de pessoas.")
+    st.caption("Idade: 17–25, 26–35, 36–45, 46–55, 56–65 e 66+ anos. Jornada: até 20, 21–39, 40, 41–50 e 51+ horas. Capital: zero, 1–5.000, 5.001–10.000 e acima de 10.000. Escolaridade: cinco grupos da classificação dos EUA, sem equivalência formal com o Brasil.")
 
 
 def pagina_especifica() -> None:
@@ -329,10 +386,10 @@ def pagina_especifica() -> None:
         st.stop()
 
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Pessoas selecionadas", inteiro(len(filtrado)))
-    col2.metric("Renda acima de US$ 50 mil", pct(filtrado["alta_renda"].mean()))
-    col3.metric("Idade mediana", f"{filtrado['age'].median():.0f} anos")
-    col4.metric("Jornada mediana", f"{filtrado['hours-per-week'].median():.0f} h por semana")
+    col1.metric("Pessoas selecionadas", inteiro(len(filtrado)), border=True)
+    col2.metric("Renda acima de US$ 50 mil", pct(filtrado["alta_renda"].mean()), border=True)
+    col3.metric("Idade mediana", f"{filtrado['age'].median():.0f} anos", border=True)
+    col4.metric("Jornada mediana", f"{filtrado['hours-per-week'].median():.0f} h por semana", border=True)
 
     aba_visao, aba_exploracao, aba_pergunta, aba_explorar, aba_dados = st.tabs(
         ["Visao geral", "Exploracao", "Pergunta de pesquisa", "Explorar duas variaveis", "Dados"]
@@ -364,8 +421,7 @@ def pagina_especifica() -> None:
             grafico_taxa_por_categoria(filtrado, "estado_civil", "Estado civil", "Taxa de renda acima de US$ 50 mil por estado civil")
             nota("estado_civil")
         with direita:
-            histograma_por_renda(filtrado, "hours-per-week", "Horas trabalhadas por semana",
-                                 "Distribuicao da jornada semanal por faixa de renda", 40)
+            grafico_jornada_por_renda(filtrado)
             nota("jornada")
 
     with aba_pergunta:
@@ -374,13 +430,14 @@ def pagina_especifica() -> None:
             "Como a escolaridade se associa a proporcao de pessoas com renda anual acima de US$ 50 mil, "
             "e como as horas trabalhadas ajudam a contextualizar essa associacao? A resposta se limita aos registros filtrados."
         )
-        esquerda, direita = st.columns((1.1, 1))
-        with esquerda:
-            grafico_pergunta(filtrado)
-            nota("pergunta")
-        with direita:
-            grafico_mapa_calor(filtrado)
-            nota("mapa")
+        with st.expander("Entenda os grupos de escolaridade"):
+            for curto, completo in zip(ROTULOS_ESCOLARIDADE_CURTOS, ORDEM_ESCOLARIDADE_AGRUPADA):
+                st.markdown(f"**{curto}:** {completo}")
+            st.caption("Classificação dos EUA, agrupada para visualização, sem equivalência formal com o sistema brasileiro.")
+        grafico_pergunta(filtrado)
+        nota("pergunta")
+        grafico_mapa_calor(filtrado)
+        nota("mapa")
         st.warning(
             "Nao interprete diferencas como causalidade. Idade, ocupacao, estado civil e outras variaveis "
             "tambem podem estar associadas ao mesmo tempo a escolaridade, a jornada e a renda.",
@@ -405,12 +462,22 @@ def pagina_especifica() -> None:
 
 # ---------------------------------------------------------------- Parte Comum (Obesity)
 
+def transformar_obesity(df: pd.DataFrame) -> pd.DataFrame:
+    """Mesma feature transformation do notebook kmeans_metricas.ipynb (20 variaveis antes do StandardScaler)."""
+    X = df.drop(columns=["NObeyesdad"]).copy()
+    for col in ["family_history_with_overweight", "FAVC", "SMOKE", "SCC"]:
+        X[col] = X[col].map({"no": 0, "yes": 1})
+    X["Gender"] = X["Gender"].map({"Female": 0, "Male": 1})
+    for col in ["CAEC", "CALC"]:
+        X[col] = X[col].map({"no": 0, "Sometimes": 1, "Frequently": 2, "Always": 3})
+    return pd.get_dummies(X, columns=["MTRANS"], prefix="MTRANS", dtype=int)
+
+
 @st.cache_data
 def preparar_comum(caminho: str):
-    """Reproduz o notebook kmeans_metricas.ipynb (padronizacao, PCA e K-Means de k = 2 a 10)."""
+    """Reproduz o notebook kmeans_metricas.ipynb (transformacao, padronizacao, PCA e K-Means de k = 2 a 10)."""
     df = pd.read_csv(caminho).drop_duplicates().reset_index(drop=True)
-    numericas = df.select_dtypes(include="number").columns.tolist()
-    X = StandardScaler().fit_transform(df[numericas])
+    X = StandardScaler().fit_transform(transformar_obesity(df))
     pca = PCA(n_components=2, random_state=42).fit(X)
     rotulos, inercias = {}, {}
     for k in range(2, 11):
@@ -441,7 +508,8 @@ def avaliar_passada(rotulos: np.ndarray, y: pd.Series):
 def pagina_comum() -> None:
     st.title("🧩 Parte Comum, K-Means no dataset Obesity")
     st.write(
-        "Resultados do notebook kmeans_metricas.ipynb (8 variaveis numericas padronizadas, random_state 42 e n_init 10). "
+        "Resultados do notebook kmeans_metricas.ipynb (20 variaveis padronizadas, sendo as 8 numericas e as categoricas "
+        "transformadas em binarias, ordinais e One-Hot, com random_state 42 e n_init 10). "
         f"A Passada 1 usa k = {K_LIVRE}, escolhido pelo Metodo do Cotovelo, e a Passada 2 usa k = {K_FIXO}, o numero real de classes."
     )
     if not OBESITY_PATH.exists():
@@ -451,10 +519,11 @@ def pagina_comum() -> None:
     y = df["NObeyesdad"]
     eixo_x = f"Componente principal 1 ({var_exp[0]:.1f}% da variancia)".replace(".", ",")
     eixo_y = f"Componente principal 2 ({var_exp[1]:.1f}% da variancia)".replace(".", ",")
-    pontos = pd.DataFrame({"pc1": coords[:, 0], "pc2": coords[:, 1], "classe": y})
+    pontos = pd.DataFrame({"pc1": coords[:, 0], "pc2": coords[:, 1], "classe": y.map(NOMES_CLASSES)})
 
-    aba_cotovelo, aba_lado, aba_animacao = st.tabs(
-        ["Metodo do Cotovelo", "Clusters e classes lado a lado", "Transicao entre as passadas"]
+    aba_cotovelo, aba_lado, aba_animacao, aba_macro = st.tabs(
+        ["Metodo do Cotovelo", "Clusters e classes lado a lado", "Transicao entre as passadas",
+         "4 macro-classes e verificacao"]
     )
 
     with aba_cotovelo:
@@ -478,6 +547,27 @@ def pagina_comum() -> None:
         m1.metric("Acuracia (cluster mapeado para a classe majoritaria)", pct(acuracia))
         m2.metric("Classes representadas", f"{representadas} de {len(CLASSES_OBESITY)}")
         m3.metric("Baseline (sempre a classe mais frequente)", pct(y.value_counts(normalize=True).max()))
+        # [IA] Claude Code - opcao de um painel por cluster para evitar a sobreposicao de cores
+        paineis = st.toggle("Mostrar um painel por cluster (sem sobreposicao)", value=False)
+        if paineis:
+            quadros = []
+            for c in range(k):
+                dentro = rotulos[k] == c
+                quadros.append(pontos.assign(
+                    painel=f"Cluster {c} · n = {dentro.sum()}",
+                    grupo=np.where(dentro, "Neste cluster", "Demais pontos"),
+                ))
+            quadros = pd.concat(quadros).sort_values("grupo")
+            fig = px.scatter(quadros, x="pc1", y="pc2", color="grupo", facet_col="painel", facet_col_wrap=3,
+                             facet_row_spacing=0.08,
+                             color_discrete_map={"Neste cluster": COR_DESTAQUE, "Demais pontos": "#5B6B7F"},
+                             category_orders={"grupo": ["Demais pontos", "Neste cluster"]}, opacity=0.8,
+                             labels={"pc1": "PC1", "pc2": "PC2", "grupo": ""},
+                             title=f"Clusters do K-Means (k = {k}), um painel por cluster")
+            fig.update_traces(marker_size=4)
+            fig.for_each_annotation(lambda anotacao: anotacao.update(text=anotacao.text.split("=", 1)[-1]))
+            fig.update_layout(height=300 * int(np.ceil(k / 3)) + 100)
+            mostrar(fig)
         esquerda, direita = st.columns(2)
         with esquerda:
             fig = px.scatter(pontos.assign(cluster=rotulos[k].astype(str)), x="pc1", y="pc2", color="cluster",
@@ -486,21 +576,25 @@ def pagina_comum() -> None:
                              title=f"Clusters do K-Means (k = {k})")
             mostrar(fig)
         with direita:
-            fig = px.scatter(pontos, x="pc1", y="pc2", color="classe", category_orders={"classe": CLASSES_OBESITY},
-                             opacity=0.7, color_discrete_sequence=px.colors.sequential.Plasma_r,
+            fig = px.scatter(pontos, x="pc1", y="pc2", color="classe", category_orders={"classe": ORDEM_NOMES_CLASSES},
+                             opacity=0.7, color_discrete_sequence=CORES_CLASSES,
                              labels={"pc1": eixo_x, "pc2": eixo_y, "classe": "Classe real"},
-                             title="Classes reais (NObeyesdad)")
+                             title="Classes reais (ordem do IMC)")
             mostrar(fig)
-        st.caption("Os dois graficos usam a mesma projecao PCA, que explica cerca de 41% da variancia, entao parte da sobreposicao vem da projecao.")
+        st.caption(
+            f"Os dois graficos usam a mesma projecao PCA, que explica cerca de {var_exp.sum():.0f}% da variancia, "
+            "entao parte da sobreposicao vem da projecao."
+        )
         esquerda, direita = st.columns((1.4, 1))
         with esquerda:
-            fig = px.imshow(matriz, text_auto=True, color_continuous_scale="Blues", aspect="auto",
+            fig = px.imshow(matriz.rename(index=NOMES_CLASSES, columns=NOMES_CLASSES), text_auto=True,
+                            color_continuous_scale="Blues", aspect="auto",
                             labels={"x": "Rotulo mapeado (classe majoritaria do cluster)", "y": "Classe real", "color": "Pessoas"},
                             title=f"Matriz de confusao ({matriz.shape[0]} x {matriz.shape[1]})")
             mostrar(fig)
         with direita:
             st.markdown("**Precisao e recall por classe**")
-            st.dataframe(metricas.round(3), width="stretch")
+            st.dataframe(metricas.rename(index=NOMES_CLASSES).round(3), width="stretch")
 
     with aba_animacao:
         quadros = pd.concat([
@@ -516,6 +610,57 @@ def pagina_comum() -> None:
         fig.update_layout(height=620)
         mostrar(fig)
         st.caption("Use o botao de play ou o controle deslizante. Os numeros dos clusters nao se correspondem entre as passadas.")
+
+    with aba_macro:
+        # [IA] Claude Code - macro-classes com mapeamento por maioria e um-para-um, e clusters x meio de transporte
+        st.markdown(
+            "As 7 classes agrupadas em 4 macro-classes (Abaixo do Peso, Normal, Sobrepeso e Obesidade), avaliadas com os "
+            f"clusters da Passada 1 (k = {K_LIVRE}). Pelo mapeamento por maioria, dois clusters recebem o rotulo Obesidade "
+            "e a coluna Sobrepeso fica zerada. O mapeamento um-para-um (algoritmo hungaro) obriga cada cluster a receber "
+            "uma macro-classe diferente."
+        )
+        y4 = y.map(MACRO_CLASSES)
+        composicao = pd.crosstab(pd.Series(rotulos[K_LIVRE], name="Cluster"), y4.rename("Macro-classe"))[ORDEM_MACRO]
+        linhas, colunas = linear_sum_assignment(-composicao.to_numpy())
+        mapeamentos = {
+            "Por maioria": composicao.idxmax(axis=1).to_dict(),
+            "Um-para-um": {composicao.index[i]: ORDEM_MACRO[j] for i, j in zip(linhas, colunas)},
+        }
+        baseline_macro = y4.value_counts(normalize=True).max()
+        resumo = []
+        cols = st.columns(2)
+        for coluna, (nome, mapa) in zip(cols, mapeamentos.items()):
+            previsto = pd.Series(rotulos[K_LIVRE]).map(mapa)
+            matriz = pd.crosstab(y4.rename("Classe real"), previsto.rename("Rotulo mapeado")).reindex(
+                index=ORDEM_MACRO, columns=ORDEM_MACRO, fill_value=0
+            )
+            acertos = np.diag(matriz.to_numpy())
+            resumo.append(pd.DataFrame({
+                "mapeamento": nome,
+                "macro-classe": ORDEM_MACRO,
+                "precisao": acertos / np.where(matriz.sum(axis=0) > 0, matriz.sum(axis=0), np.nan),
+                "recall": acertos / matriz.sum(axis=1).to_numpy(),
+            }).fillna(0))
+            with coluna:
+                st.metric(f"Acuracia ({nome.lower()})", pct(acertos.sum() / matriz.to_numpy().sum()))
+                fig = px.imshow(matriz, text_auto=True, color_continuous_scale="Blues", aspect="auto",
+                                labels={"x": "Rotulo mapeado", "y": "Classe real", "color": "Pessoas"},
+                                title=f"Matriz de confusao 4 x 4, {nome.lower()}")
+                mostrar(fig)
+        st.caption(f"Baseline (sempre Obesidade, a macro-classe mais frequente): {pct(baseline_macro)}.")
+        st.dataframe(
+            pd.concat(resumo).pivot(index="macro-classe", columns="mapeamento").reindex(ORDEM_MACRO).round(3),
+            width="stretch",
+        )
+        st.markdown(
+            "**Por que os clusters nao separam sobrepeso de obesidade.** A tabela cruza os clusters com o meio de "
+            "transporte. Depois do One-Hot e da padronizacao, MTRANS virou 5 colunas, e as categorias raras ficaram com "
+            "valores muito altos, entao o transporte domina a distancia do K-Means."
+        )
+        passada = st.radio("Passada", [f"Passada 1 (k = {K_LIVRE})", f"Passada 2 (k = {K_FIXO})"], horizontal=True)
+        k_tab = K_LIVRE if passada.startswith("Passada 1") else K_FIXO
+        st.dataframe(pd.crosstab(pd.Series(rotulos[k_tab], name="Cluster"), df["MTRANS"].rename("Transporte")),
+                     width="stretch")
 
 
 # ---------------------------------------------------------------- navegacao
