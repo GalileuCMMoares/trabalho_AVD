@@ -5,7 +5,7 @@
 | Integrante | Contribuições no projeto |
 |---|---|
 | João Pedro Aguiar Morais | Parte Comum: EDA, padronização dos dados, agrupamento com K-Means e análise de métricas. |
-| Galileu Calaça Menezes de Moraes | *Descrever as contribuições realizadas no projeto.* |
+| Galileu Calaça Menezes de Moraes | Parte Comum: mapeamento dos clusters para a classe majoritária, matrizes de confusão, cálculo de acurácia, precisão e recall, verificação da coluna Sobrepeso na matriz das macro-classes (mapeamento um-para-um e análise do meio de transporte) e discussão crítica. Atualização da página da Parte Comum no dashboard. |
 | Caio Guimarães Rocha | Parte Específica: implementação das visualizações, organização das notas analíticas e desenvolvimento do dashboard interativo em Streamlit. |
 | Mateus de Almeida Ribeiro | Parte Específica e organização do projeto: revisão da Parte Específica, organização da estrutura do repositório e conferência de que todas as entregas atendem aos requisitos do projeto. |
 
@@ -15,13 +15,17 @@
 
 **Fonte.** UCI Machine Learning Repository, *Estimation of Obesity Levels Based On Eating Habits and Physical Condition* (ID 544), arquivo `ObesityDataSet_raw_and_data_sinthetic.csv`. São 2.111 instâncias e 17 atributos: 8 numéricos, 8 categóricos e a variável alvo `NObeyesdad`, com 7 classes de nível de obesidade. Não há valores ausentes.
 
-**Limpeza.** Havia 24 linhas duplicadas, que foram removidas, restando 2.087 linhas. Decidimos remover as duplicatas devido a baixa probabilidade de duas pessoas diferentes responderem exatamente igual a 17 perguntas, o que pode configurar envios duplicados de formulario. Além disso, como o número de linhas duplicadas e pequeno, n perdemos volume relevante.
+**Limpeza.** Havia 24 linhas duplicadas, que foram removidas, restando 2.087 linhas. Decidimos remover as duplicatas devido à baixa probabilidade de duas pessoas diferentes responderem exatamente igual a 17 perguntas, o que pode configurar envios duplicados de formulário. Além disso, como o número de linhas duplicadas é pequeno, não perdemos volume relevante.
 
-**Padronização.** Como o K-Means nao pode ter acesso aos rotulos reais durante o agrupamento, a coluna `NObeyesdad` foi guardada separada (usada apenas na avaliacao e nas métricas) e aplicamos o `StandardScaler` do `scikit-learn` nas 8 variaveis numéricas.
+**Padronização.** Como o K-Means não pode ter acesso aos rótulos reais durante o agrupamento, a coluna `NObeyesdad` foi guardada separada (usada apenas na avaliação e nas métricas) e transformamos as variáveis categóricas em números: as binárias (`Gender`, `family_history_with_overweight`, `FAVC`, `SMOKE` e `SCC`) em 0 e 1, as ordinais `CAEC` e `CALC` em 0 a 3, preservando a ordem de frequência, e a nominal `MTRANS` com One-Hot (uma coluna 0/1 por meio de transporte, porque não há ordem entre eles). Em seguida aplicamos o `StandardScaler` do `scikit-learn` nas 20 variáveis resultantes (as 8 numéricas e as 12 colunas vindas das categóricas).
 
-Essa etapa e necessaria porque o K-Means forma os grupos calculando a distancia euclidiana entre os registros e os centroides. No dataset *Obesity*, as variáveis numericas estao em escalas muito diferentes, por exemplo, `Weight` varia muito mais numericamente (de 39 a 173) do que `NCP`, que varia de 1 a 4. Sem padronizar os dados, as variaveis com escalas numericas diferentes teriam pesos diferentes. As de maior escala dominariam o calculo do K-Means, enquanto as de menor escala teriam peso irrelevante.
+**Por que incluir as categóricas.** Usamos todas as variáveis do dataset, e não só as numéricas, para que o agrupamento considere também hábitos e histórico (histórico familiar, consumo de comida calórica, álcool e transporte), que a EDA mostrou estarem associados à classe. O custo dessa escolha é o efeito do One-Hot descrito abaixo.
 
-Ao aplicar a padronizacao com o `StandardScaler`, todas as variáveis numericas passam a ter media igual a 0 e desvio padrao igual a 1, garantindo que todas tenham o mesmo peso e evitando que o agrupamento seja influenciado desproporcionalmente.
+Essa etapa é necessária porque o K-Means forma os grupos calculando a distância euclidiana entre os registros e os centroides. No dataset *Obesity*, as variáveis estão em escalas muito diferentes: por exemplo, `Weight` varia de 39 a 173, enquanto `NCP` varia de 1 a 4 e as colunas binárias valem só 0 ou 1. Sem padronizar os dados, as variáveis de maior escala dominariam o cálculo do K-Means, enquanto as de menor escala teriam peso irrelevante.
+
+Ao aplicar o `StandardScaler`, cada uma das 20 colunas passa a ter média igual a 0 e desvio-padrão igual a 1, de modo que nenhuma coluna domina a distância só por estar numa escala maior.
+
+A padronização iguala o peso de cada **coluna**, não de cada variável original. Como `MTRANS` virou 5 colunas no One-Hot, o meio de transporte entra na distância com o peso de cerca de 5 variáveis. Além disso, nas colunas binárias de categorias raras (por exemplo `MTRANS_Bike`, com 7 pessoas), quem tem a categoria fica com um valor padronizado muito alto (até 17 desvios-padrão), o que afasta essas pessoas de todas as outras. Esse efeito aparece nos resultados do K-Means e está discutido na Discussão crítica.
 
 ### EDA
 
@@ -37,7 +41,7 @@ As figuras e tabelas desta secao estao no notebook `notebooks/parte_comum/eda.ip
 - `Gender` (50,4% homens) e as 7 classes (entre 12,8% e 16,8% cada) sao equilibrados, o que e pouco comum em dados reais e e mais um sinal do balanceamento sintetico.
 
 **3. Relacoes.**
-- As correlacoes entre as numericas sao fracas. A maior e entre `Height` e `Weight` (0,46), seguida de `Age` e `TUE` (-0,30) e `Height` e `FAF` (0,29). Nenhum par passa de 0,5, entao nao ha redundancia forte entre as variaveis.
+- O teste de Shapiro-Wilk rejeitou a normalidade das 8 variáveis numéricas (p-valor menor que 0,05 em todas), então usamos a correlação de Spearman, que trabalha com a ordem dos valores e não supõe normalidade nem relação linear. As correlações são fracas. A maior é entre `Height` e `Weight` (0,46), seguida de `Age` e `Weight` (0,35), `Height` e `FAF` (0,33) e `Age` e `TUE` (-0,31). Nenhum par passa de 0,5, então não há redundância forte entre as variáveis.
 - Com a classe, `Weight` cresce de forma ordenada (media de 50,0 kg em Insufficient_Weight ate 120,9 kg em Obesity_Type_III), como esperado para classes criadas a partir do IMC. `Height` so se destaca em Obesity_Type_II (media de 1,77 m), `Age` e maior em Overweight_Level_II e Obesity_Type_II, e `FAF` cai de forma geral das classes mais leves para as mais pesadas.
 - Em Obesity_Type_III, `FCVC` e `NCP` valem 3 para todos os registros, o que nao e esperado em dados reais e provavelmente vem da geracao sintetica.
 - Nas categoricas, `Gender` tem a relacao mais forte. Obesity_Type_II e quase so de homens (28% dos homens contra 0,2% das mulheres) e Obesity_Type_III quase so de mulheres (31,2% das mulheres contra 0,1% dos homens), entao nessas classes sexo e grau de obesidade ficam misturados.
@@ -50,61 +54,81 @@ As figuras e tabelas desta secao estao no notebook `notebooks/parte_comum/eda.ip
 
 ### K-Means e métricas
 
-Rodamos o K-Means (`random_state=42`, `n_init=10`) sobre as 8 variáveis numéricas padronizadas, em duas passadas: k = 4, escolhido pelo Método do Cotovelo, e k = 7, o número real de classes. Para avaliar, cada cluster foi mapeado para a classe real majoritária dentro dele; a matriz de confusão compara esse rótulo mapeado com a classe real. Na Passada 1 a matriz é 7×4 (só 4 rótulos possíveis) e na Passada 2 é 7×7. Acurácia, precisão e recall por classe foram calculados a partir da matriz (notebook `kmeans_metricas.ipynb`, figuras em `out/parte_comum/kmeans/`).
+Rodamos o K-Means (`random_state=42`, `n_init=10`) sobre 20 variáveis padronizadas com `StandardScaler`: as 8 numéricas e as categóricas transformadas (binárias `yes`/`no` e `Gender` em 0/1, `CAEC` e `CALC` como ordinais de 0 a 3, e `MTRANS` com One-Hot). Foram duas passadas: k = 4, escolhido pelo Método do Cotovelo, e k = 7, o número real de classes.
+
+**Escolha de k na Passada 1.** Rodamos o K-Means para k de 2 a 10 e registramos a inércia (soma das distâncias ao quadrado de cada ponto ao centro do seu cluster). A curva não tem um cotovelo nítido: a inércia cai 9% de k = 2 para k = 3, 7% de 3 para 4 e, a partir daí, entre 6% e 8% a cada novo cluster. Ou seja, a partir de k = 4 cada cluster a mais traz um ganho parecido, sem um ponto em que a queda pare de forma clara. Escolhemos k = 4 por ser o ponto em que as quedas se estabilizam e por manter um número pequeno de grupos, que ainda dá para interpretar. Como o cotovelo não é claro, essa escolha tem uma parte subjetiva (ver Limitações).
+
+**Visualização dos grupos.** Para visualizar os clusters das duas passadas, projetamos as 20 variáveis em 2 dimensões com PCA e colorimos cada ponto pelo seu cluster (figuras `clusters_livre.png` e `clusters_fixo.png`). As duas componentes explicam só cerca de 25% da variância (13,8% e 11,6%), então grupos que estão separados nas 20 dimensões podem aparecer sobrepostos no gráfico. O PCA foi usado apenas para desenhar e não interfere no agrupamento.
+
+O K-Means não vê o rótulo `NObeyesdad`. Para avaliar, cada cluster foi mapeado para a classe real majoritária dentro dele, e todas as pessoas do cluster recebem esse rótulo previsto. A matriz de confusão compara o rótulo previsto com a classe real. Na Passada 1 a matriz é 7×4 (só 4 rótulos possíveis) e na Passada 2 é 7×7. Acurácia, precisão e recall por classe foram calculados a partir da matriz (notebook `kmeans_metricas.ipynb`, figuras em `out/parte_comum/kmeans/`).
+
+Dois detalhes da avaliação:
+- "Classe majoritária" significa a classe **mais frequente** dentro do cluster, não necessariamente mais da metade. No cluster 1 da Passada 1, por exemplo, a classe que dá nome ao cluster (`Obesity_Type_I`) tem 24,8% das pessoas.
+- Quando nenhum cluster recebe o nome de uma classe, a precisão dela é indefinida (0 dividido por 0, porque ninguém foi previsto como aquela classe). Nesses casos registramos 0, o que puxa a precisão média (macro) para baixo. Isso explica parte da diferença de precisão média entre as passadas: a Passada 1 tem 3 classes nunca previstas e a Passada 2 tem 2.
 
 | Passada | k | Acurácia | Precisão macro | Recall macro | Classes representadas |
 |---|---|---|---|---|---|
-| 1 — k livre | 4 | 0,310 | 0,174 | 0,310 | 4/7 |
-| 2 — k fixo | 7 | 0,382 | 0,265 | 0,370 | 5/7 |
+| 1 — k livre | 4 | 0,317 | 0,215 | 0,309 | 4/7 |
+| 2 — k fixo | 7 | 0,306 | 0,256 | 0,299 | 5/7 |
 
 Baseline (prever sempre a classe mais frequente): acurácia 0,168.
 
 | Classe | Recall P1 | Recall P2 | Precisão P1 | Precisão P2 |
 |---|---|---|---|---|
-| Insufficient_Weight | 0,764 | 0,461 | 0,292 | 0,346 |
-| Normal_Weight | 0,000 | 0,348 | 0,000 | 0,275 |
+| Insufficient_Weight | 0,704 | 0,528 | 0,397 | 0,411 |
+| Normal_Weight | 0,145 | 0,145 | 0,562 | 0,562 |
 | Overweight_Level_I | 0,000 | 0,000 | 0,000 | 0,000 |
 | Overweight_Level_II | 0,000 | 0,000 | 0,000 | 0,000 |
-| Obesity_Type_I | 0,208 | 0,382 | 0,225 | 0,260 |
-| Obesity_Type_II | 0,633 | 0,401 | 0,326 | 0,352 |
-| Obesity_Type_III | 0,565 | 1,000 | 0,377 | 0,622 |
+| Obesity_Type_I | 0,313 | 0,313 | 0,248 | 0,249 |
+| Obesity_Type_II | 0,000 | 0,498 | 0,000 | 0,226 |
+| Obesity_Type_III | 0,997 | 0,611 | 0,294 | 0,344 |
 
-Na Passada 1, cada cluster recebeu um rótulo diferente (`Insufficient_Weight`, `Obesity_Type_I`, `Obesity_Type_II` e `Obesity_Type_III`), mas a classe majoritária ocupa só 22,5% a 37,7% de cada cluster. Na Passada 2, dois clusters foram mapeados para `Obesity_Type_III` e dois para `Obesity_Type_I`, de modo que `Overweight_Level_I` e `Overweight_Level_II` não são previstas.
+Na Passada 1, cada cluster recebeu um rótulo diferente (`Obesity_Type_III`, `Obesity_Type_I`, `Insufficient_Weight` e `Normal_Weight`), e a classe majoritária ocupa de 24,8% a 56,2% de cada cluster. Na Passada 2, três clusters foram mapeados para `Normal_Weight`, de modo que `Overweight_Level_I` e `Overweight_Level_II` não são previstas.
+
+**Análise complementar com 4 macro-classes.** Agrupando as 7 classes em Abaixo do Peso, Normal, Sobrepeso (níveis I e II) e Obesidade (tipos I, II e III), o K-Means com k = 4 chega a acurácia 0,568 (baseline 0,466). Pelo mapeamento por maioria, porém, dois clusters recebem o rótulo Obesidade e a coluna Sobrepeso da matriz fica zerada. Verificamos que isso não é erro de código: as pessoas com sobrepeso estão nos mesmos clusters que as com obesidade, que é a maioria (46,6% do dataset). Cruzando os clusters com `MTRANS`, vimos que eles foram formados principalmente pelo meio de transporte: na Passada 1, um cluster é 100% transporte público, outro 100% carro e outro reúne a pé, bicicleta e moto. Com um mapeamento um-para-um (algoritmo húngaro, cada cluster recebe uma macro-classe diferente, escolhida para maximizar o total de acertos; só é possível aqui porque o número de clusters, 4, é igual ao de macro-classes), Sobrepeso passa a ser prevista (recall 0,281, precisão 0,359) e a acurácia fica em 0,546.
+
+| Macro-classe | Recall (maioria) | Recall (um-para-um) | Precisão (maioria) | Precisão (um-para-um) |
+|---|---|---|---|---|
+| Abaixo do Peso | 0,704 | 0,704 | 0,397 | 0,397 |
+| Normal | 0,145 | 0,145 | 0,562 | 0,562 |
+| Sobrepeso | 0,000 | 0,281 | 0,000 | 0,359 |
+| Obesidade | 0,985 | 0,773 | 0,621 | 0,684 |
 
 ### Discussão crítica
 
 #### Qual passada gerou grupos mais coerentes?
 
-Pelas métricas, a Passada 2 (k = 7) foi melhor. A acurácia subiu de 0,310 para 0,382, a precisão média de 0,174 para 0,265 e o recall médio de 0,310 para 0,370. Ela também representa 5 das 7 classes, contra 4 na Passada 1. As duas passadas superam o baseline de 0,168 (prever sempre a classe mais frequente), então os clusters carregam alguma informação sobre o nível de obesidade, mas pouca: na melhor das passadas, quase 2 em cada 3 pessoas caem num cluster cuja classe majoritária não é a sua.
+As duas passadas ficaram muito próximas, e nenhuma reproduz bem as 7 classes. A Passada 1 (k = 4) teve acurácia um pouco maior (0,317 contra 0,306) e recall médio um pouco maior (0,309 contra 0,299); a Passada 2 (k = 7) teve precisão média maior (0,256 contra 0,215) e representa 5 das 7 classes, contra 4. As duas superam o baseline de 0,168 (prever sempre a classe mais frequente), então os clusters carregam alguma informação sobre o nível de obesidade, mas pouca: cerca de 7 em cada 10 pessoas caem num cluster cuja classe majoritária não é a sua.
 
-A Passada 1 só não fica tão atrás porque, com menos clusters, cada um "cobre" mais classes vizinhas. A pureza dos clusters mostra isso: na Passada 1 a classe majoritária ocupa entre 22,5% e 37,7% de cada cluster, ou seja, nenhum grupo é dominado por uma classe. Na Passada 2 aparecem grupos mais puros, com destaque para o cluster 3 (71,9% `Obesity_Type_III`) e o cluster 1 (52,5% `Obesity_Type_III`). Por isso consideramos a Passada 2 a mais coerente em relação às classes reais, ainda que coerente aqui signifique "menos misturada", não "bem separada".
-
-O ganho da Passada 2, porém, não é uniforme. `Obesity_Type_III` passa a ter recall 1,0, mas `Insufficient_Weight` cai de 0,764 para 0,461 e `Obesity_Type_II` de 0,633 para 0,401, porque essas classes foram divididas entre mais clusters.
+Consideramos a Passada 1 a mais coerente. Com quase o mesmo desempenho, ela usa menos grupos, e seus 4 clusters têm tamanhos razoáveis. Na Passada 2, os 3 clusters a mais não foram usados para separar níveis de obesidade: três deles (0, 4 e 6) têm só 55, 11 e 7 pessoas e são formados, respectivamente, só por quem anda a pé, de moto e de bicicleta (seção 3.5 do notebook), e os três receberam o rótulo `Normal_Weight`. O único ganho real da Passada 2 é separar `Obesity_Type_II` de `Obesity_Type_III` (recall de `Obesity_Type_II` vai de 0 para 0,498), e essa separação veio do sexo, como mostrado abaixo.
 
 #### Por que algumas classes nunca são previstas?
 
-Na Passada 2, dois pares de clusters receberam o mesmo rótulo (dois viraram `Obesity_Type_III` e dois `Obesity_Type_I`). Sobram só 5 rótulos distintos, e `Overweight_Level_I` e `Overweight_Level_II` nunca são previstas (recall 0 nas duas passadas). Essas pessoas estão espalhadas: `Overweight_Level_II` aparece com 55, 66 e 63 registros nos clusters 0, 2 e 6, e em nenhum deles é maioria. Isso faz sentido porque as faixas de sobrepeso ficam no meio da escala de IMC (cerca de 23 a 30) e se sobrepõem às classes vizinhas em todas as variáveis.
+No mapeamento pela classe majoritária, cada cluster recebe o nome da classe real mais frequente dentro dele, e vários clusters podem receber o mesmo nome. Na Passada 2, três clusters viraram `Normal_Weight`, e sobram só 5 rótulos distintos; `Overweight_Level_I` e `Overweight_Level_II` nunca são previstas (recall 0 nas duas passadas). Essas pessoas estão espalhadas: na Passada 2, `Overweight_Level_II` aparece com 71, 94 e 106 registros nos clusters 1, 2 e 3, e em nenhum deles é maioria. As faixas de sobrepeso ficam no meio da escala de IMC e se sobrepõem às classes vizinhas.
+
+O mesmo acontece na análise com 4 macro-classes (seção 3.4 do notebook): os clusters 0 e 1 têm maioria de Obesidade (Obesidade é 46,6% do dataset), os dois recebem esse rótulo e a coluna "Sobrepeso" da matriz fica zerada. Com o mapeamento um-para-um (seção 3.5 do notebook), Sobrepeso passa a aparecer (recall 0,28), mas a acurácia cai de 0,568 para 0,546 e a maior parte das pessoas com sobrepeso continua no cluster de Obesidade. Ou seja, o mapeamento explica a coluna zerada, mas a causa de fundo é que os clusters não separam sobrepeso de obesidade.
 
 #### O que o K-Means realmente agrupou
 
-Olhando os centroides, os clusters seguem eixos que não são o nível de obesidade:
+- *Meio de transporte:* é o eixo principal. Na Passada 1, o cluster 0 é 100% transporte público, o cluster 1 é 100% carro e o cluster 3 reúne a pé, bicicleta e moto. Na Passada 2 cada cluster tem praticamente um único meio de transporte. Isso acontece porque, depois do One-Hot e da padronização, `MTRANS` virou 5 colunas, e as categorias raras ganharam valores muito altos (até 17 desvios-padrão em `MTRANS_Bike`), então uma variável pesa como cinco na distância.
+- *Sexo/altura:* na Passada 2, os clusters 1 e 3 são ambos de transporte público, mas o cluster 1 tem 83% de mulheres e altura média de 1,64 m, e o cluster 3 tem 21% de mulheres e 1,78 m. O cluster feminino fica com maioria `Obesity_Type_III` e o masculino com `Obesity_Type_II`. Como o IMC é peso dividido pela altura ao quadrado, a separação entre esses níveis veio do sexo, não de um grau maior de obesidade.
+- *Histórico familiar e idade:* o cluster 5 da Passada 2, de maioria `Insufficient_Weight`, é o único em que poucos têm histórico familiar de sobrepeso (12%, contra 55% a 100% nos demais), e o cluster 2 (carro) é o mais velho (idade média de 32 anos).
 
-- *Sexo/altura:* na Passada 2, os clusters 2 e 3 têm peso médio parecido (102 kg e 99 kg), mas o cluster 2 tem altura média de 1,79 m e 3% de mulheres, e o cluster 3 tem 1,65 m e 90% de mulheres. Como o mesmo peso numa pessoa mais baixa gera IMC maior, o cluster masculino fica com maioria `Obesity_Type_II` e o feminino com `Obesity_Type_III`. A separação veio da altura, não do grau de obesidade.
-- *Hábitos:* o cluster 4 se diferencia por ter em média 1,2 refeições principais por dia (`NCP`), o cluster 5 pela atividade física alta (`FAF` = 2,1) e o cluster 6 pela idade (37 anos contra cerca de 21–25 nos demais). Nenhum desses eixos coincide com uma faixa de IMC, e por isso esses clusters misturam várias classes.
-
-Ou seja, o K-Means encontrou perfis de estilo de vida e de corpo, que é o que as 8 variáveis descrevem com peso igual, enquanto as classes reais foram definidas a partir de apenas duas delas (peso e altura, via IMC).
+Ou seja, o K-Means encontrou perfis de estilo de vida e de corpo, que é o que as 20 variáveis descrevem com peso igual, enquanto as classes reais foram definidas a partir de apenas duas delas (peso e altura, via IMC).
 
 #### Granularidade das classes
 
-As classes foram criadas a partir do IMC (segundo a documentacao do dataset, com base nas faixas da OMS e da normativa mexicana), mas nos dados elas nao funcionam como cortes limpos de uma unica variavel. A tabela de IMC por classe (secao 3.3 do notebook `kmeans_metricas.ipynb`) mostra que as faixas de classes vizinhas se sobrepoem, por exemplo sobrepeso I vai de 22,8 a 28,8 e sobrepeso II de 25,7 a 30,4, e o IMC minimo de sobrepeso I (22,8) fica dentro da faixa de peso normal (18,5 a 24,9). Uma explicacao provavel e que cerca de 77% dos registros foram gerados sinteticamente (SMOTE), por interpolacao entre registros, o que pode criar combinacoes de peso e altura fora da faixa da propria classe. Com isso, nem o IMC sozinho separa perfeitamente as classes vizinhas, e o K-Means tem ainda menos chance, porque as outras 6 variaveis, padronizadas com o mesmo peso, diluem a informacao de peso e altura. Os dados parecem sustentar uma divisao mais grosseira (abaixo do peso ou normal, sobrepeso, obesidade e obesidade severa) do que as 7 classes, o que tambem esta de acordo com o cotovelo sem dobra nitida.
+As classes foram criadas a partir do IMC (segundo a documentação do dataset, com base nas faixas da OMS e da normativa mexicana), mas nos dados elas não funcionam como cortes limpos de uma única variável. A tabela de IMC por classe (seção 3.3 do notebook `kmeans_metricas.ipynb`) mostra que as faixas de classes vizinhas se sobrepõem: por exemplo, sobrepeso I vai de 22,8 a 28,8 e sobrepeso II de 25,7 a 30,4, e o IMC mínimo de sobrepeso I (22,8) fica dentro da faixa de peso normal (18,5 a 24,9). Uma explicação provável é que cerca de 77% dos registros foram gerados sinteticamente (SMOTE), por interpolação entre registros, o que pode criar combinações de peso e altura fora da faixa da própria classe. Com isso, nem o IMC sozinho separa perfeitamente as classes vizinhas, e o K-Means tem ainda menos chance, porque as outras 18 variáveis, padronizadas com o mesmo peso, diluem a informação de peso e altura.
+
+O agrupamento em 4 macro-classes confirma que uma divisão mais grosseira combina melhor com os dados: com k = 4, a acurácia sobe para 0,568 (baseline 0,466), contra 0,317 nas 7 classes. Mesmo assim, Normal (recall 0,145) e Sobrepeso continuam mal separados, porque ficam no meio da escala e se misturam com as classes vizinhas.
 
 #### Limitações
 
-- Usamos só as variáveis numéricas; as categóricas (histórico familiar, `FAVC`, transporte, sexo) ficaram de fora e podem ter informação útil.
+- A codificação One-Hot de `MTRANS`, padronizada junto com as outras variáveis, fez o transporte dominar o agrupamento. Uma alternativa seria dar menos peso a essas colunas ou não padronizar as variáveis binárias.
 - Cerca de 77% do dataset foi gerado sinteticamente (SMOTE) pelos autores. Isso explica valores fracionários em variáveis que deveriam ser discretas (`FCVC`, `NCP`, `FAF`, `TUE`, `CH2O`) e pode criar padrões artificiais.
 - A escolha de k = 4 foi feita pelo cotovelo, que não tem um ponto de inflexão claro.
 - O mapeamento pela classe majoritária permite que vários clusters recebam o mesmo rótulo e deixa classes sem representação, o que penaliza as métricas por classe.
-- O K-Means assume grupos esféricos e de tamanho parecido, o que não precisa valer para estes dados.
+- O K-Means assume grupos esféricos e de tamanho parecido, o que não vale aqui: na Passada 2 há clusters de 7 e de 654 pessoas.
 
 ## Parte Específica — Adult
 
@@ -130,7 +154,7 @@ As classes foram criadas a partir do IMC (segundo a documentacao do dataset, com
 
 A EDA está em `src/parte_especifica/eda.ipynb`, e as figuras geradas por ele estão em `out/parte_especifica/figuras/`. As tabelas de apoio estão em `out/parte_especifica/eda/` (geradas por `src/parte_especifica/eda_inicial.py`).
 
-**1. Estrutura.** 48.842 linhas e 15 colunas: 6 numéricas inteiras (`age`, `fnlwgt`, `education-num`, `capital-gain`, `capital-loss`, `hours-per-week`) e 9 categóricas (incluindo `income`). `education` e `education-num` descrevem a mesma informação (16 níveis); usaremos apenas uma delas por análise. `fnlwgt` é um peso amostral do censo, não uma característica da pessoa, e não será usado como variável explicativa. A classe é desbalanceada: 37.155 (76,1%) `<=50K` e 11.687 (23,9%) `>50K`.
+**1. Estrutura.** 48.842 linhas e 15 colunas: 6 numéricas inteiras (`age`, `fnlwgt`, `education-num`, `capital-gain`, `capital-loss`, `hours-per-week`) e 9 categóricas (incluindo `income`). `education` e `education-num` descrevem a mesma informação (16 níveis); usamos apenas uma delas por análise (`education-num` para ordenar os níveis, com os nomes em português nos gráficos). `fnlwgt` é um peso amostral do censo, não uma característica da pessoa, e não foi usado na análise. A classe é desbalanceada: 37.155 (76,1%) `<=50K` e 11.687 (23,9%) `>50K`.
 
 **2. Distribuições.**
 - `age`: média 38,6, mediana 37, intervalo 17–90, ligeiramente assimétrica à direita. O valor 90 é um teto da base (186 pessoas com 80 anos ou mais).
@@ -141,7 +165,7 @@ A EDA está em `src/parte_especifica/eda.ipynb`, e as figuras geradas por ele es
 
 **3. Relações com a classe.**
 - *Idade e horas:* quem ganha `>50K` é mais velho (média 44,3 contra 36,9) e trabalha mais (45,5 contra 38,8 horas por semana), mas as medianas de horas são iguais (40), então a diferença vem da cauda de longas jornadas.
-- *Escolaridade:* é o preditor mais forte entre os nominais. A proporção de `>50K` vai de 1% a 16% até o ensino médio, sobe para 41% em bacharelado, 55% em mestrado e passa de 72% em doutorado e escola profissional.
+- *Escolaridade:* é a variável categórica mais associada à renda. A proporção de `>50K` vai de 1% a 16% até o ensino médio, sobe para 41% em bacharelado, 55% em mestrado e passa de 72% em doutorado e escola profissional.
 - *Estado civil e parentesco:* casados no civil têm 44,6% de `>50K`; solteiros que nunca casaram, 4,5%. Efeito parcialmente confundido com idade.
 - *Ocupação:* varia de 1,2% (serviço doméstico) e 4,1% (outros serviços) a 45,1% (profissionais especializados) e 47,8% (gerência).
 - *Sexo e raça:* 30,4% dos homens contra 10,9% das mulheres têm `>50K`. Por raça, asiático-pacífico (26,9%) e branca (25,4%) ficam acima de negra (12,1%) e indígena (11,7%). São associações descritivas na amostra, que não isolam causas (a distribuição por ocupação, idade e horas também difere entre grupos).
@@ -155,9 +179,9 @@ A EDA está em `src/parte_especifica/eda.ipynb`, e as figuras geradas por ele es
 - Em `education-num`, os sinalizados são níveis baixos de escolaridade, válidos.
 - `age` (até 90) é plausível; o 90 é um teto de codificação.
 - `fnlwgt` é peso amostral e não entra na análise.
-- O valor 99.999 em `capital-gain` é um código de teto, não um valor exato; será mencionado nas notas dos gráficos.
+- O valor 99.999 em `capital-gain` é um código de teto, não um valor exato.
 
-Para visualização, `capital-gain` e `capital-loss` serão tratados em escala logarítmica ou como indicador (tem/não tem), e a idade e as horas poderão ser agrupadas em faixas. Os testes e modelos, se usados, consideram o desbalanceamento da classe (76/24).
+Como a pergunta de pesquisa trata de escolaridade e horas, `capital-gain` e `capital-loss` não entram nas seis visualizações; elas aparecem apenas no explorador de duas variáveis do dashboard, na escala original, onde o 99.999 deve ser lido como teto. As horas foram agrupadas em faixas (até 20, 21 a 39, 40, 41 a 50 e 51 ou mais) para o mapa de calor. Por causa do desbalanceamento da classe (76/24), todas as comparações usam a taxa de renda alta dentro de cada grupo, e não contagens.
 
 ### Storytelling e visualizações
 
@@ -254,4 +278,4 @@ A segunda pagina e dedicada a Parte Comum. Ela mostra o Metodo do Cotovelo com a
 
 ## Uso de IA
 
-Registrar os usos permitidos, identificar os trechos de código apoiados por IA e anexar a declaração assinada. Declaração: [Clique aqui](docs\DECLARACAO_IA.md)
+Registrar os usos permitidos, identificar os trechos de código apoiados por IA e anexar a declaração assinada. Declaração: [Clique aqui](DECLARACAO_IA.md)

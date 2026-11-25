@@ -11,6 +11,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+from scipy.optimize import linear_sum_assignment
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -46,6 +47,12 @@ CLASSES_OBESITY = [
     "Obesity_Type_I", "Obesity_Type_II", "Obesity_Type_III",
 ]
 K_LIVRE, K_FIXO = 4, 7
+MACRO_CLASSES = {
+    "Insufficient_Weight": "Abaixo do Peso", "Normal_Weight": "Normal",
+    "Overweight_Level_I": "Sobrepeso", "Overweight_Level_II": "Sobrepeso",
+    "Obesity_Type_I": "Obesidade", "Obesity_Type_II": "Obesidade", "Obesity_Type_III": "Obesidade",
+}
+ORDEM_MACRO = ["Abaixo do Peso", "Normal", "Sobrepeso", "Obesidade"]
 
 st.set_page_config(page_title="Projeto AVD", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 
@@ -405,12 +412,22 @@ def pagina_especifica() -> None:
 
 # ---------------------------------------------------------------- Parte Comum (Obesity)
 
+def transformar_obesity(df: pd.DataFrame) -> pd.DataFrame:
+    """Mesma feature transformation do notebook kmeans_metricas.ipynb (20 variaveis antes do StandardScaler)."""
+    X = df.drop(columns=["NObeyesdad"]).copy()
+    for col in ["family_history_with_overweight", "FAVC", "SMOKE", "SCC"]:
+        X[col] = X[col].map({"no": 0, "yes": 1})
+    X["Gender"] = X["Gender"].map({"Female": 0, "Male": 1})
+    for col in ["CAEC", "CALC"]:
+        X[col] = X[col].map({"no": 0, "Sometimes": 1, "Frequently": 2, "Always": 3})
+    return pd.get_dummies(X, columns=["MTRANS"], prefix="MTRANS", dtype=int)
+
+
 @st.cache_data
 def preparar_comum(caminho: str):
-    """Reproduz o notebook kmeans_metricas.ipynb (padronizacao, PCA e K-Means de k = 2 a 10)."""
+    """Reproduz o notebook kmeans_metricas.ipynb (transformacao, padronizacao, PCA e K-Means de k = 2 a 10)."""
     df = pd.read_csv(caminho).drop_duplicates().reset_index(drop=True)
-    numericas = df.select_dtypes(include="number").columns.tolist()
-    X = StandardScaler().fit_transform(df[numericas])
+    X = StandardScaler().fit_transform(transformar_obesity(df))
     pca = PCA(n_components=2, random_state=42).fit(X)
     rotulos, inercias = {}, {}
     for k in range(2, 11):
@@ -441,7 +458,8 @@ def avaliar_passada(rotulos: np.ndarray, y: pd.Series):
 def pagina_comum() -> None:
     st.title("🧩 Parte Comum, K-Means no dataset Obesity")
     st.write(
-        "Resultados do notebook kmeans_metricas.ipynb (8 variaveis numericas padronizadas, random_state 42 e n_init 10). "
+        "Resultados do notebook kmeans_metricas.ipynb (20 variaveis padronizadas, sendo as 8 numericas e as categoricas "
+        "transformadas em binarias, ordinais e One-Hot, com random_state 42 e n_init 10). "
         f"A Passada 1 usa k = {K_LIVRE}, escolhido pelo Metodo do Cotovelo, e a Passada 2 usa k = {K_FIXO}, o numero real de classes."
     )
     if not OBESITY_PATH.exists():
@@ -453,8 +471,9 @@ def pagina_comum() -> None:
     eixo_y = f"Componente principal 2 ({var_exp[1]:.1f}% da variancia)".replace(".", ",")
     pontos = pd.DataFrame({"pc1": coords[:, 0], "pc2": coords[:, 1], "classe": y})
 
-    aba_cotovelo, aba_lado, aba_animacao = st.tabs(
-        ["Metodo do Cotovelo", "Clusters e classes lado a lado", "Transicao entre as passadas"]
+    aba_cotovelo, aba_lado, aba_animacao, aba_macro = st.tabs(
+        ["Metodo do Cotovelo", "Clusters e classes lado a lado", "Transicao entre as passadas",
+         "4 macro-classes e verificacao"]
     )
 
     with aba_cotovelo:
@@ -491,7 +510,10 @@ def pagina_comum() -> None:
                              labels={"pc1": eixo_x, "pc2": eixo_y, "classe": "Classe real"},
                              title="Classes reais (NObeyesdad)")
             mostrar(fig)
-        st.caption("Os dois graficos usam a mesma projecao PCA, que explica cerca de 41% da variancia, entao parte da sobreposicao vem da projecao.")
+        st.caption(
+            f"Os dois graficos usam a mesma projecao PCA, que explica cerca de {var_exp.sum():.0f}% da variancia, "
+            "entao parte da sobreposicao vem da projecao."
+        )
         esquerda, direita = st.columns((1.4, 1))
         with esquerda:
             fig = px.imshow(matriz, text_auto=True, color_continuous_scale="Blues", aspect="auto",
@@ -516,6 +538,57 @@ def pagina_comum() -> None:
         fig.update_layout(height=620)
         mostrar(fig)
         st.caption("Use o botao de play ou o controle deslizante. Os numeros dos clusters nao se correspondem entre as passadas.")
+
+    with aba_macro:
+        # [IA] Claude Code - macro-classes com mapeamento por maioria e um-para-um, e clusters x meio de transporte
+        st.markdown(
+            "As 7 classes agrupadas em 4 macro-classes (Abaixo do Peso, Normal, Sobrepeso e Obesidade), avaliadas com os "
+            f"clusters da Passada 1 (k = {K_LIVRE}). Pelo mapeamento por maioria, dois clusters recebem o rotulo Obesidade "
+            "e a coluna Sobrepeso fica zerada. O mapeamento um-para-um (algoritmo hungaro) obriga cada cluster a receber "
+            "uma macro-classe diferente."
+        )
+        y4 = y.map(MACRO_CLASSES)
+        composicao = pd.crosstab(pd.Series(rotulos[K_LIVRE], name="Cluster"), y4.rename("Macro-classe"))[ORDEM_MACRO]
+        linhas, colunas = linear_sum_assignment(-composicao.to_numpy())
+        mapeamentos = {
+            "Por maioria": composicao.idxmax(axis=1).to_dict(),
+            "Um-para-um": {composicao.index[i]: ORDEM_MACRO[j] for i, j in zip(linhas, colunas)},
+        }
+        baseline_macro = y4.value_counts(normalize=True).max()
+        resumo = []
+        cols = st.columns(2)
+        for coluna, (nome, mapa) in zip(cols, mapeamentos.items()):
+            previsto = pd.Series(rotulos[K_LIVRE]).map(mapa)
+            matriz = pd.crosstab(y4.rename("Classe real"), previsto.rename("Rotulo mapeado")).reindex(
+                index=ORDEM_MACRO, columns=ORDEM_MACRO, fill_value=0
+            )
+            acertos = np.diag(matriz.to_numpy())
+            resumo.append(pd.DataFrame({
+                "mapeamento": nome,
+                "macro-classe": ORDEM_MACRO,
+                "precisao": acertos / np.where(matriz.sum(axis=0) > 0, matriz.sum(axis=0), np.nan),
+                "recall": acertos / matriz.sum(axis=1).to_numpy(),
+            }).fillna(0))
+            with coluna:
+                st.metric(f"Acuracia ({nome.lower()})", pct(acertos.sum() / matriz.to_numpy().sum()))
+                fig = px.imshow(matriz, text_auto=True, color_continuous_scale="Blues", aspect="auto",
+                                labels={"x": "Rotulo mapeado", "y": "Classe real", "color": "Pessoas"},
+                                title=f"Matriz de confusao 4 x 4, {nome.lower()}")
+                mostrar(fig)
+        st.caption(f"Baseline (sempre Obesidade, a macro-classe mais frequente): {pct(baseline_macro)}.")
+        st.dataframe(
+            pd.concat(resumo).pivot(index="macro-classe", columns="mapeamento").reindex(ORDEM_MACRO).round(3),
+            width="stretch",
+        )
+        st.markdown(
+            "**Por que os clusters nao separam sobrepeso de obesidade.** A tabela cruza os clusters com o meio de "
+            "transporte. Depois do One-Hot e da padronizacao, MTRANS virou 5 colunas, e as categorias raras ficaram com "
+            "valores muito altos, entao o transporte domina a distancia do K-Means."
+        )
+        passada = st.radio("Passada", [f"Passada 1 (k = {K_LIVRE})", f"Passada 2 (k = {K_FIXO})"], horizontal=True)
+        k_tab = K_LIVRE if passada.startswith("Passada 1") else K_FIXO
+        st.dataframe(pd.crosstab(pd.Series(rotulos[k_tab], name="Cluster"), df["MTRANS"].rename("Transporte")),
+                     width="stretch")
 
 
 # ---------------------------------------------------------------- navegacao
