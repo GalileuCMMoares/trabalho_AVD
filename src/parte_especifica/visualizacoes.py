@@ -16,6 +16,8 @@ from traducoes import (
     ORDEM_ESCOLARIDADE_AGRUPADA,
     ORDEM_CODIGOS_ESCOLARIDADE,
     ORDEM_RENDA,
+    CORES_ESCOLARIDADE_AGRUPADA,
+    ROTULOS_CURTOS_AGRUPADA,
     inteiro,
     pct,
     preparar_adult,
@@ -101,9 +103,9 @@ def exploratoria_3_educacao(df: pd.DataFrame) -> None:
     fig, ax = plt.subplots(figsize=(9, 7))
     tabela.plot.barh(stacked=True, ax=ax, color=[CORES_RENDA[renda] for renda in ORDEM_RENDA])
     ax.set_xlim(0, 100)
-    ax.legend(title="Faixa de renda anual")
+    ax.legend(title="Faixa de renda anual", loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2, frameon=False)
     finalizar(ax, "Faixa de renda em cada nivel de escolaridade", "% de pessoas no nivel", "Escolaridade agrupada (EUA)")
-    rodape(ax, "Categorias dos EUA; associate degree nao representa equivalencia formal com diploma brasileiro.")
+    rodape(ax, "Categorias dos EUA; associate degree nao representa equivalencia formal com diploma brasileiro.", y=-0.28)
     salvar(fig, "03 - Escolaridade por Renda")
 
 
@@ -144,7 +146,7 @@ def explanatoria_1_pergunta_pesquisa(df: pd.DataFrame) -> None:
                 fontsize=9, fontweight="bold" if forte else "normal")
     finalizar(
         ax,
-        "Taxa de renda acima de US$ 50 mil por escolaridade",
+        f"Com bacharelado ou mais, {pct(taxa_sup, 0)} tem renda acima de US$ 50 mil, contra {pct(taxa_inf, 0)} abaixo",
         "% de pessoas com renda acima de US$ 50 mil",
         "Escolaridade",
     )
@@ -152,45 +154,54 @@ def explanatoria_1_pergunta_pesquisa(df: pd.DataFrame) -> None:
     ax.set_xlim(0, 100)
     rodape(
         ax,
-        f"Coral, graduacao ou mais ({pct(taxa_sup)} no conjunto). Cinza azulado, niveis abaixo da graduacao "
+        f"Coral, bacharelado ou mais ({pct(taxa_sup)} no conjunto). Cinza azulado, grupos abaixo do bacharelado "
         f"({pct(taxa_inf)}). Associacao descritiva, nao demonstra causalidade.",
     )
     salvar(fig, "05 - Pergunta por escolaridade")
 
 
 def explanatoria_2_horas_escolaridade(df: pd.DataFrame) -> None:
-    """X2, comparacao multivariada que complementa a narrativa."""
+    """X2, taxa de renda alta ao longo das faixas de horas, uma linha por grupo de escolaridade."""
+    # [IA] Claude Code - troca do mapa de calor por linhas, pedida no feedback da professora
     df = df.assign(faixa=df["faixa_horas"].astype(str))
     taxa = pd.crosstab(df["escolaridade_agrupada"], df["faixa"], values=df["alta_renda"], aggfunc="mean")
     contagem = pd.crosstab(df["escolaridade_agrupada"], df["faixa"])
-    taxa = taxa.reindex(index=list(reversed(ORDEM_ESCOLARIDADE_AGRUPADA)), columns=FAIXAS_HORAS) * 100
+    taxa = taxa.reindex(index=ORDEM_ESCOLARIDADE_AGRUPADA, columns=FAIXAS_HORAS) * 100
     contagem = contagem.reindex(index=taxa.index, columns=FAIXAS_HORAS).fillna(0)
+    taxa = taxa.where(contagem >= MINIMO_CELULA)
 
-    fig, ax = plt.subplots(figsize=(8.5, 7))
-    ax.set_facecolor("#EEEEEE")
-    ax.grid(False)
-    sns.heatmap(
-        taxa,
-        mask=(contagem < MINIMO_CELULA).to_numpy(),
-        cmap="YlOrRd",
-        vmin=0,
-        vmax=100,
-        annot=True,
-        fmt=".0f",
-        cbar_kws={"label": "% com renda acima de US$ 50 mil"},
-        ax=ax,
-    )
+    fig, ax = plt.subplots(figsize=(10, 6.5))
+    x = np.arange(len(FAIXAS_HORAS))
+    # rotulo no fim de cada linha, afastando rotulos que ficariam colados (diferenca menor que 4 pontos)
+    finais = taxa["51 ou mais"].sort_values()
+    posicoes, anterior = {}, -10.0
+    for grupo, valor in finais.items():
+        anterior = max(valor, anterior + 4)
+        posicoes[grupo] = anterior
+    for grupo in ORDEM_ESCOLARIDADE_AGRUPADA:
+        valores = taxa.loc[grupo].to_numpy()
+        forte = grupo == ORDEM_ESCOLARIDADE_AGRUPADA[-1]
+        ax.plot(x, valores, marker="o", color=CORES_ESCOLARIDADE_AGRUPADA[grupo], linewidth=3 if forte else 2)
+        ax.text(x[-1] + 0.12, posicoes[grupo], f"{ROTULOS_CURTOS_AGRUPADA[grupo]} ({pct(valores[-1] / 100, 0)})",
+                va="center", fontsize=9, color="#333333", fontweight="bold" if forte else "normal")
+    bach_40 = taxa.loc[ORDEM_ESCOLARIDADE_AGRUPADA[-1], "40"]
+    ax.annotate(f"Bacharelado com 40 h: {pct(bach_40 / 100, 0)}, acima de qualquer\noutro grupo mesmo com 51 h ou mais", xy=(2, bach_40), xytext=(0.1, bach_40 + 14),
+                arrowprops=dict(arrowstyle="-", color="#777777"), fontsize=9, color="#333333")
+    ax.set_xticks(x, FAIXAS_HORAS)
+    ax.set_ylim(0, 75)
+    ax.set_xlim(-0.2, len(FAIXAS_HORAS) + 0.6)
+    ax.grid(axis="x", visible=False)
     finalizar(
         ax,
-        "Renda alta e mais frequente onde escolaridade e jornada sao maiores",
+        "Jornada longa nao compensa escolaridade baixa",
         "Horas trabalhadas por semana",
-        "Escolaridade",
+        "% com renda acima de US$ 50 mil",
     )
     rodape(
         ax,
-        f"Cada celula mostra a % de pessoas com renda acima de US$ 50 mil. Celulas em cinza tem menos de "
-        f"{MINIMO_CELULA} pessoas.",
-        y=-0.12,
+        f"Cada ponto e a % de pessoas com renda acima de US$ 50 mil no grupo e na faixa de horas. Pontos com menos "
+        f"de {MINIMO_CELULA} pessoas sao omitidos. Associacao descritiva, nao demonstra causalidade.",
+        y=-0.14,
     )
     salvar(fig, "06 - Escolaridade por Horas")
 

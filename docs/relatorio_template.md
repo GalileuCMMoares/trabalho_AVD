@@ -31,12 +31,15 @@ A padronização iguala o peso de cada **coluna**, não de cada variável origin
 
 As figuras e tabelas desta secao estao no notebook `notebooks/parte_comum/eda.ipynb`.
 
+Nos gráficos, as classes aparecem sempre na ordem do IMC e com nomes em português (Abaixo do peso, Peso normal, Sobrepeso I e II, Obesidade I, II e III), com uma escala de cor do azul ao vermelho. As categorias ordinais `CAEC` e `CALC` seguem a ordem natural (no, Sometimes, Frequently, Always). No texto mantemos os códigos originais da coluna `NObeyesdad`, entre crases.
+
 **1. Estrutura.** O dataset tem 2.111 linhas e 17 colunas, sendo 8 numericas (`Age`, `Height`, `Weight`, `FCVC`, `NCP`, `CH2O`, `FAF`, `TUE`) e 9 categoricas, incluindo a classe `NObeyesdad`. Nao ha valores ausentes, e as 24 linhas duplicadas foram removidas (ver Dataset e preparacao). Na qualidade dos dados, `FCVC`, `NCP`, `CH2O`, `FAF` e `TUE` vem de perguntas com respostas inteiras, mas entre 30,7% e 61,8% dos valores sao fracionarios. Isso e consistente com a informacao do UCI de que cerca de 77% dos registros foram gerados sinteticamente (SMOTE), por interpolacao. Mantivemos essas escalas como numericas, lembrando que os valores intermediarios nao sao respostas reais.
 
 **2. Distribuicoes.**
 - `Age` e concentrada em jovens (metade entre 19,9 e 26 anos, mediana 22,85) e tem cauda longa a direita ate 61 anos.
 - `Height` e aproximadamente simetrica em torno de 1,70 m, e `Weight` vai de 39 a 173 kg sem um unico pico, o que combina com classes que vao de abaixo do peso ate obesidade tipo III.
 - `FCVC`, `CH2O`, `FAF` e `TUE` tem picos nos valores inteiros e valores espalhados entre eles. `NCP` e muito concentrada em 3 refeicoes (cerca de 70% dos registros).
+- Essas cinco variáveis vêm de perguntas com escala ordinal, mas os valores fracionários gerados pelo SMOTE fazem com que se comportem como numéricas contínuas. Por isso usamos histogramas e boxplots para elas, e é assim que entram no K-Means. Os picos nos valores inteiros correspondem às respostas reais do questionário.
 - Varias categoricas sao muito desbalanceadas (`SMOKE` 97,9% nao, `SCC` 95,4% nao, `FAVC` 88,4% sim, historico familiar 82,5% sim, `CAEC` 84,4% Sometimes), e algumas categorias quase nao tem casos (`CALC` Always com 1 registro, `MTRANS` Bike com 7 e Motorbike com 11).
 - `Gender` (50,4% homens) e as 7 classes (entre 12,8% e 16,8% cada) sao equilibrados, o que e pouco comum em dados reais e e mais um sinal do balanceamento sintetico.
 
@@ -44,6 +47,7 @@ As figuras e tabelas desta secao estao no notebook `notebooks/parte_comum/eda.ip
 - O teste de Shapiro-Wilk rejeitou a normalidade das 8 variáveis numéricas (p-valor menor que 0,05 em todas), então usamos a correlação de Spearman, que trabalha com a ordem dos valores e não supõe normalidade nem relação linear. As correlações são fracas. A maior é entre `Height` e `Weight` (0,46), seguida de `Age` e `Weight` (0,35), `Height` e `FAF` (0,33) e `Age` e `TUE` (-0,31). Nenhum par passa de 0,5, então não há redundância forte entre as variáveis.
 - Com a classe, `Weight` cresce de forma ordenada (media de 50,0 kg em Insufficient_Weight ate 120,9 kg em Obesity_Type_III), como esperado para classes criadas a partir do IMC. `Height` so se destaca em Obesity_Type_II (media de 1,77 m), `Age` e maior em Overweight_Level_II e Obesity_Type_II, e `FAF` cai de forma geral das classes mais leves para as mais pesadas.
 - Em Obesity_Type_III, `FCVC` e `NCP` valem 3 para todos os registros, o que nao e esperado em dados reais e provavelmente vem da geracao sintetica.
+- Para os cruzamentos entre as variáveis categóricas e a classe, que são duas variáveis qualitativas, usamos barras empilhadas em 100%: cada barra é uma categoria e mostra como as pessoas dela se dividem entre as 7 classes, com o número de pessoas ao lado para indicar categorias pequenas.
 - Nas categoricas, `Gender` tem a relacao mais forte. Obesity_Type_II e quase so de homens (28% dos homens contra 0,2% das mulheres) e Obesity_Type_III quase so de mulheres (31,2% das mulheres contra 0,1% dos homens), entao nessas classes sexo e grau de obesidade ficam misturados.
 - Quem nao tem historico familiar de sobrepeso esta concentrado em Insufficient_Weight (38,9%) e Normal_Weight (35,6%) e nao aparece em Obesity_Type_III. Quem come entre refeicoes com frequencia esta mais em Insufficient_Weight (49,6%), e quem anda a pe esta mais em Normal_Weight (56,4%), mas esta ultima categoria tem poucos registros.
 
@@ -58,7 +62,7 @@ Rodamos o K-Means (`random_state=42`, `n_init=10`) sobre 20 variáveis padroniza
 
 **Escolha de k na Passada 1.** Rodamos o K-Means para k de 2 a 10 e registramos a inércia (soma das distâncias ao quadrado de cada ponto ao centro do seu cluster). A curva não tem um cotovelo nítido: a inércia cai 9% de k = 2 para k = 3, 7% de 3 para 4 e, a partir daí, entre 6% e 8% a cada novo cluster. Ou seja, a partir de k = 4 cada cluster a mais traz um ganho parecido, sem um ponto em que a queda pare de forma clara. Escolhemos k = 4 por ser o ponto em que as quedas se estabilizam e por manter um número pequeno de grupos, que ainda dá para interpretar. Como o cotovelo não é claro, essa escolha tem uma parte subjetiva (ver Limitações).
 
-**Visualização dos grupos.** Para visualizar os clusters das duas passadas, projetamos as 20 variáveis em 2 dimensões com PCA e colorimos cada ponto pelo seu cluster (figuras `clusters_livre.png` e `clusters_fixo.png`). As duas componentes explicam só cerca de 25% da variância (13,8% e 11,6%), então grupos que estão separados nas 20 dimensões podem aparecer sobrepostos no gráfico. O PCA foi usado apenas para desenhar e não interfere no agrupamento.
+**Visualização dos grupos.** Para visualizar os clusters das duas passadas, projetamos as 20 variáveis em 2 dimensões com PCA e colorimos cada ponto pelo seu cluster (figuras `clusters_livre.png` e `clusters_fixo.png`). As duas componentes explicam só cerca de 25% da variância (13,8% e 11,6%), então grupos que estão separados nas 20 dimensões podem aparecer sobrepostos no gráfico. O PCA foi usado apenas para desenhar e não interfere no agrupamento. Como os 2.087 pontos se sobrepõem num único gráfico, também geramos uma versão com um painel por cluster (`clusters_livre_paineis.png` e `clusters_fixo_paineis.png`), em que cada painel destaca um cluster sobre os demais pontos em cinza. O dashboard tem a mesma opção.
 
 O K-Means não vê o rótulo `NObeyesdad`. Para avaliar, cada cluster foi mapeado para a classe real majoritária dentro dele, e todas as pessoas do cluster recebem esse rótulo previsto. A matriz de confusão compara o rótulo previsto com a classe real. Na Passada 1 a matriz é 7×4 (só 4 rótulos possíveis) e na Passada 2 é 7×7. Acurácia, precisão e recall por classe foram calculados a partir da matriz (notebook `kmeans_metricas.ipynb`, figuras em `out/parte_comum/kmeans/`).
 
@@ -181,34 +185,46 @@ A EDA está em `src/parte_especifica/eda.ipynb`, e as figuras geradas por ele es
 - `fnlwgt` é peso amostral e não entra na análise.
 - O valor 99.999 em `capital-gain` é um código de teto, não um valor exato.
 
-Como a pergunta de pesquisa trata de escolaridade e horas, `capital-gain` e `capital-loss` não entram nas seis visualizações; elas aparecem apenas no explorador de duas variáveis do dashboard, na escala original, onde o 99.999 deve ser lido como teto. As horas foram agrupadas em faixas (até 20, 21 a 39, 40, 41 a 50 e 51 ou mais) para o mapa de calor. Por causa do desbalanceamento da classe (76/24), todas as comparações usam a taxa de renda alta dentro de cada grupo, e não contagens.
+Como a pergunta de pesquisa trata de escolaridade e horas, `capital-gain` e `capital-loss` não entram nas seis visualizações; elas aparecem apenas no explorador de duas variáveis do dashboard, agrupadas em faixas (sem valor, até 5.000, de 5.001 a 10.000 e acima de 10.000), de modo que o teto de 99.999 cai na última faixa. As horas foram agrupadas em faixas (até 20, 21 a 39, 40, 41 a 50 e 51 ou mais) para o gráfico 6, e a escolaridade foi agrupada em 5 grupos (ver Storytelling e visualizações). Por causa do desbalanceamento da classe (76/24), todas as comparações usam a taxa de renda alta dentro de cada grupo, e não contagens.
 
 ### Storytelling e visualizações
 
 #### Raciocinio do storytelling
 
-**Publico.** A comunicacao e voltada para a equipe de planejamento educacional e empregabilidade definida acima. Sao pessoas que decidem onde investir em programas de formacao e entendem bem de niveis de ensino, mas nao fazem parte do time tecnico. Por isso os graficos usam os nomes dos niveis de ensino em portugues no lugar dos codigos numericos, os explanatorios tem titulos que ja dizem a conclusao e poucos elementos alem dos dados.
+**Publico.** A comunicacao e voltada para a equipe de planejamento educacional e empregabilidade definida acima. Sao pessoas que decidem onde investir em programas de formacao e entendem bem de niveis de ensino, mas nao fazem parte do time tecnico. Por isso os graficos usam nomes de escolaridade em portugues no lugar dos codigos numericos, os explanatorios tem titulos que ja dizem a conclusao e poucos elementos alem dos dados.
+
+**Agrupamento da escolaridade.** A base usa 16 niveis do sistema escolar dos EUA, varios deles com poucas pessoas e sem equivalente direto no Brasil (por exemplo, associate degree e professional school). Para simplificar a leitura, agrupamos os 16 niveis em 5 grupos, mantendo a classificacao americana e indicando isso nos rotulos e nas notas:
+
+| Grupo | Niveis originais | Pessoas | Taxa de renda acima de US$ 50 mil |
+|---|---|---|---|
+| Ate 8a serie | Preschool a 7th-8th | 1.794 | 5,5% |
+| 9a a 12a serie, sem diploma | 9th a 12th | 4.614 | 5,8% |
+| Ensino medio completo | HS-grad | 15.784 | 15,9% |
+| Faculdade sem diploma ou associate degree | Some-college, Assoc-voc, Assoc-acdm | 14.540 | 20,6% |
+| Bacharelado ou titulacao superior | Bachelors, Masters, Prof-school, Doctorate | 12.110 | 48,1% |
+
+Os grupos seguem a hierarquia de ensino. Professional school (titulos profissionais como medicina e direito) entra no ultimo grupo junto com mestrado e doutorado, porque nao forma uma escala linear com eles. O mesmo agrupamento e usado em todos os graficos que mostram escolaridade (3, 5 e 6) e no explorador do dashboard.
 
 **O que a exploracao mostrou.**
 - A base e desbalanceada (76,1% ate US$ 50 mil), entao as comparacoes precisam ser feitas por taxa e nao por contagem.
-- Entre todas as variaveis, a escolaridade e a que mais separa a renda. A taxa de renda alta vai de 1,2% na educacao infantil a 74% na escola profissional.
-- Olhando os niveis em ordem, a taxa fica abaixo de 8% ate a 12a serie, sobe para 16% no ensino medio completo e da um salto na graduacao (41%). A relacao nao e uma subida gradual, ela tem um ponto de virada.
+- Entre todas as variaveis, a escolaridade e a que mais separa a renda. Nos 16 niveis originais, a taxa de renda alta vai de 1,2% na educacao infantil a 74% na escola profissional.
+- Com os grupos em ordem, a taxa fica perto de 6% ate a 12a serie sem diploma, sobe para 15,9% no ensino medio completo e 20,6% em faculdade ou associate degree, e da um salto para 48,1% em bacharelado ou mais. A relacao nao e uma subida gradual, ela tem um ponto de virada no bacharelado.
 - Idade, ocupacao, estado civil e sexo tambem se associam a renda, mas nenhuma delas tem uma amplitude tao grande quanto a escolaridade.
-- As horas trabalhadas tem a mesma mediana nas duas faixas de renda (40 horas). A diferenca aparece na cauda de jornadas longas, e o cruzamento com a escolaridade mostra que a jornada aumenta a taxa dentro de cada nivel, mas nao compensa um nivel baixo.
+- As horas trabalhadas tem a mesma mediana nas duas faixas de renda (40 horas). A diferenca aparece na cauda de jornadas longas, e o cruzamento com a escolaridade mostra que a jornada aumenta a taxa dentro de cada grupo, mas nao compensa uma escolaridade baixa.
 
-**A historia.** Na base Adult, concluir a graduacao e o ponto de virada da renda. Com graduacao ou mais, 48,1% das pessoas ganham acima de US$ 50 mil, contra 16,0% nos niveis abaixo. Trabalhar mais horas ajuda, mas nao substitui a escolaridade, ja que quem tem ensino medio completo e trabalha 51 horas ou mais (28%) ainda fica abaixo de quem tem graduacao e trabalha 40 horas (37%).
+**A historia.** Na base Adult, concluir o bacharelado e o ponto de virada da renda. Com bacharelado ou mais, 48,1% das pessoas ganham acima de US$ 50 mil, contra 16,0% nos grupos abaixo. Trabalhar mais horas ajuda, mas nao substitui a escolaridade, ja que quem tem ensino medio completo e trabalha 51 horas ou mais (27,9%) ainda fica abaixo de quem tem bacharelado ou mais e trabalha 40 horas (42,3%).
 
-**Por que essa mensagem e a mais relevante para esse publico.** A equipe precisa decidir em que etapa da formacao concentrar esforcos. A mensagem aponta onde a diferenca e maior (a conclusao da graduacao) e evita uma leitura comum e enganosa, a de que jornada longa resolve a renda. Como os dados sao descritivos, deixamos claro nos graficos e no texto que se trata de associacao e nao de causa, porque idade, ocupacao e sexo tambem variam junto com a escolaridade.
+**Por que essa mensagem e a mais relevante para esse publico.** A equipe precisa decidir em que etapa da formacao concentrar esforcos. A mensagem aponta onde a diferenca e maior (a conclusao do bacharelado) e evita uma leitura comum e enganosa, a de que jornada longa resolve a renda. Como os dados sao descritivos, deixamos claro nos graficos e no texto que se trata de associacao e nao de causa, porque idade, ocupacao e sexo tambem variam junto com a escolaridade.
 
-**Da exploratoria para a explanatoria.** Na exploracao, o grafico de renda por escolaridade (notebook da EDA) mostrava todas as barras na mesma cor, ordenadas pela taxa, com o tamanho de cada grupo e uma linha de media. Na versao explanatoria (grafico 5) mudamos quatro coisas. Colocamos os niveis na ordem de ensino, para que a posicao mostre onde a taxa muda. Usamos cor so nos niveis de graduacao ou mais. Trocamos o titulo descritivo por um titulo que ja diz a conclusao. E retiramos a grade, mantendo apenas o valor ao lado de cada barra. No mapa de calor (grafico 6), trocamos os codigos de escolaridade pelos nomes dos niveis, fixamos a escala de cor de 0 a 100% e escondemos as celulas com menos de 30 pessoas, que antes apareciam com 0% ou valores extremos e podiam enganar.
+**Da exploratoria para a explanatoria.** Na exploracao, o grafico de renda por escolaridade (notebook da EDA) mostrava os 16 niveis na mesma cor, ordenados pela taxa, com o tamanho de cada grupo e uma linha de media. Na versao explanatoria (grafico 5) mudamos cinco coisas. Agrupamos os niveis em 5 grupos, para reduzir o numero de barras. Colocamos os grupos na ordem de ensino, para que a posicao mostre onde a taxa muda. Usamos cor so no grupo de bacharelado ou mais. Trocamos o titulo descritivo por um titulo que ja diz a conclusao. E retiramos a grade, mantendo apenas o valor ao lado de cada barra. No grafico 6, trocamos o mapa de calor com 16 niveis por um grafico de linhas com os 5 grupos: as faixas de horas sao ordenadas, entao a linha mostra a tendencia de cada grupo e a distancia entre eles, sem depender da comparacao de intensidades de cor.
 
 **Atributos pre atentivos usados.**
-- Cor. Vermelho apenas nos niveis de graduacao ou mais e cinza azulado nos demais, para o olho ir direto ao grupo que carrega a mensagem. O corte coincide com os niveis que passam de 40%, entao a cor marca ao mesmo tempo um nivel de ensino e um patamar de renda. O vermelho tambem e a cor da faixa acima de US$ 50 mil em todos os outros graficos, o que mantem o significado da cor no dashboard inteiro.
-- Posicao. As barras seguem a ordem dos niveis de ensino e o eixo comeca em zero, entao o salto na graduacao aparece como uma quebra visivel no comprimento das barras.
-- Intensidade. No mapa de calor, uma unica escala de amarelo a vermelho representa a taxa, e a cor mais forte fica no canto de maior escolaridade e maior jornada.
-- Texto. Os titulos dos graficos explanatorios dizem a conclusao, e os valores aparecem ao lado das barras e dentro das celulas, para que a leitura nao dependa do eixo.
+- Cor. Coral apenas no grupo de bacharelado ou mais e tons de cinza azulado nos demais, para o olho ir direto ao grupo que carrega a mensagem. O coral tambem e a cor da faixa acima de US$ 50 mil nos outros graficos, o que mantem o significado da cor no dashboard inteiro.
+- Posicao. As barras seguem a ordem dos grupos de ensino e o eixo comeca em zero, entao o salto no bacharelado aparece como uma quebra visivel no comprimento das barras. No grafico 6, a altura de cada linha mostra a taxa, e a linha coral fica acima de todas as outras em qualquer jornada.
+- Espessura. No grafico 6, a linha do bacharelado ou mais e mais grossa que as demais.
+- Texto. Os titulos dos graficos explanatorios dizem a conclusao, e os valores aparecem ao lado das barras e no fim de cada linha, para que a leitura nao dependa do eixo.
 
-Nao usamos graficos de pizza nem de radar, porque as comparacoes sao entre muitas categorias ordenadas, e barras e mapas de calor permitem comparar comprimentos e posicoes com mais precisao.
+Nao usamos graficos de pizza nem de radar, porque as comparacoes sao entre categorias ordenadas, e barras e linhas permitem comparar comprimentos e posicoes com mais precisao.
 
 #### Notas analiticas das visualizacoes
 
@@ -226,11 +242,11 @@ As visualizacoes 1 a 6 estao em `out/parte_especifica/visualizacoes/` (geradas p
 - **Insight.** Quem ganha acima de US$ 50 mil e mais velho (mediana de 43 anos, contra 34). A taxa de renda alta e quase nula ate 25 anos (1,8%) e chega ao maximo entre 46 e 55 anos (39,2%). Mesmo assim as duas distribuicoes se sobrepoem bastante, entao a idade sozinha nao separa as faixas.
 - **Por que este grafico.** O histograma mostra forma e sobreposicao de uma variavel numerica, e a normalizacao dentro de cada grupo corrige o desbalanceamento da base.
 
-**3. Nivel de escolaridade por faixa de renda (exploratoria)**
+**3. Faixa de renda em cada grupo de escolaridade (exploratoria)**
 
-- **O que mostra.** Mediana, quartis e extremos do nivel de escolaridade em cada faixa de renda.
-- **Insight.** Entre quem ganha ate US$ 50 mil, metade parou no ensino medio completo ou antes. Entre quem ganha acima, a mediana sobe para tecnologo academico e pelo menos um quarto tem graduacao ou mais. A escolaridade e a variavel que mais desloca a distribuicao entre as duas faixas.
-- **Por que este grafico.** O boxplot resume e compara a distribuicao de uma variavel ordenada entre dois grupos de forma compacta.
+- **O que mostra.** Composicao percentual das faixas de renda dentro de cada grupo de escolaridade (cada barra soma 100%).
+- **Insight.** A parcela com renda acima de US$ 50 mil cresce a cada grupo: 5,5% ate a 8a serie, 5,8% da 9a a 12a serie sem diploma, 15,9% no ensino medio completo, 20,6% em faculdade sem diploma ou associate degree e 48,1% em bacharelado ou mais. O maior salto esta entre os dois ultimos grupos, e a escolaridade e a variavel que mais separa as faixas de renda.
+- **Por que este grafico.** Escolaridade agrupada e faixa de renda sao duas variaveis qualitativas, entao barras empilhadas em 100% mostram a composicao de cada grupo sem o efeito do desbalanceamento da base. Esse grafico substituiu o boxplot, que tratava a escolaridade como numero.
 
 **4. Taxa de renda acima de US$ 50 mil por ocupacao (exploratoria)**
 
@@ -240,15 +256,15 @@ As visualizacoes 1 a 6 estao em `out/parte_especifica/visualizacoes/` (geradas p
 
 **5. Taxa de renda acima de US$ 50 mil por escolaridade (explanatoria)**
 
-- **O que mostra.** Taxa de renda acima de US$ 50 mil em cada nivel de escolaridade, na ordem dos niveis.
-- **Insight.** Ate a 12a serie a taxa fica abaixo de 8% (5,7% no conjunto), sobe para 16% no ensino medio completo e da um salto na graduacao (41%), chegando a 55% no mestrado e a 73% e 74% no doutorado e na escola profissional. Quem tem graduacao ou mais tem taxa de 48,1%, tres vezes a dos demais (16,0%). Este e o grafico que responde diretamente a pergunta de pesquisa.
-- **Por que este grafico.** Com as barras na ordem dos niveis, a posicao mostra em que ponto a taxa muda, e a cor destaca so os niveis de graduacao ou mais, que sao exatamente os que passam de 40%.
+- **O que mostra.** Taxa de renda acima de US$ 50 mil em cada grupo de escolaridade, na ordem dos niveis de ensino.
+- **Insight.** Ate a 12a serie sem diploma a taxa fica perto de 6%. Ela sobe para 15,9% no ensino medio completo e 20,6% em faculdade sem diploma ou associate degree, e da um salto para 48,1% em bacharelado ou mais, tres vezes a taxa do conjunto abaixo do bacharelado (16,0%). Este e o grafico que responde diretamente a pergunta de pesquisa.
+- **Por que este grafico.** Com as barras na ordem dos niveis, a posicao mostra onde a taxa muda, e a cor destaca so o grupo de bacharelado ou mais, que concentra a diferenca. O titulo ja diz a conclusao.
 
 **6. Escolaridade, jornada semanal e renda (explanatoria)**
 
-- **O que mostra.** Taxa de renda acima de US$ 50 mil para cada combinacao de escolaridade e faixa de horas semanais. Celulas com menos de 30 pessoas ficam em branco.
-- **Insight.** De forma geral, a taxa sobe com a jornada ate a faixa de 41 a 50 horas e depois praticamente para de subir. A escolaridade pesa mais que a jornada. Quem tem ensino medio completo e trabalha 51 horas ou mais tem 28% de renda alta, menos do que quem tem graduacao e trabalha 40 horas (37%). Ou seja, jornada longa nao compensa escolaridade baixa.
-- **Por que este grafico.** O mapa de calor cruza duas variaveis categorizadas e mostra a taxa pela intensidade da cor. Esconder as celulas pequenas evita que percentuais instaveis chamem atencao.
+- **O que mostra.** Taxa de renda acima de US$ 50 mil em cada faixa de horas semanais, com uma linha para cada grupo de escolaridade. Pontos com menos de 30 pessoas sao omitidos.
+- **Insight.** Em todos os grupos a taxa sobe com a jornada ate a faixa de 41 a 50 horas e depois quase nao muda (bacharelado ou mais vai de 60,6% para 62,4%). A escolaridade pesa mais que a jornada: quem tem ensino medio completo e trabalha 51 horas ou mais tem 27,9% de renda alta, menos do que quem tem bacharelado ou mais e trabalha 40 horas (42,3%). Ou seja, jornada longa nao compensa escolaridade baixa.
+- **Por que este grafico.** As faixas de horas sao ordenadas, entao linhas mostram a tendencia de cada grupo ao longo da jornada e a distancia entre os grupos ao mesmo tempo. Com 5 grupos, a comparacao fica mais direta do que no mapa de calor usado antes, em que era preciso comparar intensidades de cor.
 
 **Apoio A. Taxa de renda acima de US$ 50 mil por estado civil (dashboard)**
 
@@ -258,13 +274,13 @@ As visualizacoes 1 a 6 estao em `out/parte_especifica/visualizacoes/` (geradas p
 
 **Apoio B. Distribuicao da jornada semanal por faixa de renda (dashboard)**
 
-- **O que mostra.** Distribuicao das horas trabalhadas por semana em cada faixa de renda, em percentual do proprio grupo.
+- **O que mostra.** Distribuicao das horas trabalhadas por semana em cada faixa de renda, em percentual do proprio grupo, em paineis separados.
 - **Insight.** As duas faixas tem mediana de 40 horas, mas 49,1% de quem ganha acima de US$ 50 mil trabalha mais de 40 horas, contra 23,2% de quem ganha ate esse valor. A diferenca esta na cauda de jornadas longas.
-- **Por que este grafico.** O histograma normalizado por grupo mostra onde as distribuicoes se separam sem o efeito do desbalanceamento.
+- **Por que este grafico.** Histogramas em paineis separados e com a mesma escala permitem comparar as distribuicoes sem a sobreposicao que havia quando as duas apareciam no mesmo grafico. Os percentuais sao calculados dentro de cada faixa de renda.
 
 #### Resposta a pergunta de pesquisa
 
-Na base Adult, a escolaridade se associa fortemente a proporcao de pessoas com renda anual acima de US$ 50 mil, e essa associacao tem um ponto de virada na graduacao. A taxa fica abaixo de 8% ate a 12a serie, chega a 16% no ensino medio completo e sobe para 41% na graduacao, 55% no mestrado e 73% a 74% no doutorado e na escola profissional. Quem tem graduacao ou mais tem taxa de 48,1%, tres vezes a dos demais niveis (16,0%). As horas trabalhadas contextualizam essa relacao. Dentro de cada nivel, a taxa sobe com a jornada ate cerca de 41 a 50 horas, mas a jornada nao compensa a escolaridade, ja que ensino medio completo com 51 horas ou mais (28%) ainda fica abaixo de graduacao com 40 horas (37%). Esses resultados descrevem associacoes na amostra e nao demonstram causa, porque idade, ocupacao, estado civil e sexo variam junto com a escolaridade e a jornada.
+Na base Adult, a escolaridade se associa fortemente a proporcao de pessoas com renda anual acima de US$ 50 mil, e essa associacao tem um ponto de virada no bacharelado. A taxa fica perto de 6% ate a 12a serie sem diploma, chega a 15,9% no ensino medio completo e 20,6% em faculdade sem diploma ou associate degree, e sobe para 48,1% em bacharelado ou mais, tres vezes a dos grupos abaixo (16,0%). As horas trabalhadas contextualizam essa relacao. Dentro de cada grupo, a taxa sobe com a jornada ate cerca de 41 a 50 horas e depois se estabiliza, mas a jornada nao compensa a escolaridade, ja que ensino medio completo com 51 horas ou mais (27,9%) ainda fica abaixo de bacharelado ou mais com 40 horas (42,3%). Esses resultados descrevem associacoes na amostra e nao demonstram causa, porque idade, ocupacao, estado civil e sexo variam junto com a escolaridade e a jornada.
 
 ### Dashboard
 
@@ -272,9 +288,9 @@ O dashboard e executado com
 
     streamlit run src/parte_especifica/dashboard.py
 
-Ele tem duas paginas. A pagina da Parte Especifica reune os indicadores da amostra filtrada e cinco abas. Visao geral (graficos 1 e 2), Exploracao (graficos 3 e 4 e os graficos de apoio de estado civil e jornada), Pergunta de pesquisa (graficos 5 e 6), Explorar duas variaveis e Dados. Os filtros de sexo, tipo de trabalho, idade e horas por semana atualizam todos os graficos e indicadores da pagina, inclusive o titulo do grafico 5, que recalcula as taxas do recorte. Cada grafico tem um botao com a sua nota analitica. Na aba Explorar duas variaveis, o usuario escolhe quaisquer duas variaveis e o grafico se adapta ao tipo delas (mapa de densidade para duas numericas, boxplot para numerica com categorica e barras empilhadas em 100% para duas categoricas), com opcao de separar por faixa de renda. A aba Dados permite exportar o recorte filtrado em CSV.
+Ele tem duas paginas e um tema visual proprio (fundo escuro, azul para a faixa ate US$ 50 mil e coral para a faixa acima). A pagina da Parte Especifica reune os indicadores da amostra filtrada e cinco abas. Visao geral (graficos 1 e 2), Exploracao (graficos 3 e 4 e os graficos de apoio de estado civil e jornada), Pergunta de pesquisa (graficos 5 e 6), Explorar duas variaveis e Dados. Os filtros de sexo, tipo de trabalho, idade e horas por semana atualizam todos os graficos e indicadores da pagina, inclusive o titulo do grafico 5, que recalcula as taxas do recorte. Cada grafico tem um botao com a sua nota analitica. Na aba Explorar duas variaveis, o usuario escolhe quaisquer duas variaveis e ve o cruzamento em barras empilhadas em 100%; as variaveis numericas sao apresentadas em faixas fixas e a escolaridade usa os mesmos 5 grupos dos graficos, com opcao de separar por faixa de renda. A aba Dados permite exportar o recorte filtrado em CSV.
 
-A segunda pagina e dedicada a Parte Comum. Ela mostra o Metodo do Cotovelo com as duas passadas marcadas, um controle para escolher k de 2 a 10 com os clusters e as classes reais lado a lado na mesma projecao PCA, a matriz de confusao e as metricas do k escolhido, e uma animacao da transicao entre a Passada 1 (k = 4) e a Passada 2 (k = 7).
+A segunda pagina e dedicada a Parte Comum. Ela mostra o Metodo do Cotovelo com as duas passadas marcadas, um controle para escolher k de 2 a 10 com os clusters e as classes reais lado a lado na mesma projecao PCA (com opcao de um painel por cluster), a matriz de confusao e as metricas do k escolhido, uma animacao da transicao entre a Passada 1 (k = 4) e a Passada 2 (k = 7) e a verificacao com as 4 macro-classes.
 
 ## Uso de IA
 

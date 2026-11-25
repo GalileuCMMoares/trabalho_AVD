@@ -45,6 +45,13 @@ ESCOLARIDADE_AGRUPADA = {
     **{n: ORDEM_ESCOLARIDADE_AGRUPADA[3] for n in range(10, 13)},
     **{n: ORDEM_ESCOLARIDADE_AGRUPADA[4] for n in range(13, 17)},
 }
+# Rotulos curtos e cores dos grupos (tons de cinza azulado e coral so no bacharelado ou mais)
+ROTULOS_CURTOS_AGRUPADA = dict(zip(ORDEM_ESCOLARIDADE_AGRUPADA, [
+    "Ate 8a serie", "9a a 12a sem diploma", "Ensino medio completo", "Faculdade / associate", "Bacharelado ou mais",
+]))
+CORES_ESCOLARIDADE_AGRUPADA = dict(zip(ORDEM_ESCOLARIDADE_AGRUPADA, [
+    "#A9BCCB", "#89A2B6", "#6D88A0", "#56708A", COR_DESTAQUE,
+]))
 NIVEL_GRADUACAO = 13  # a partir deste education-num o nivel e graduacao ou mais
 
 SEXO = {"Male": "Homem", "Female": "Mulher"}
