@@ -51,6 +51,8 @@ As tabelas são gravadas em out/parte_especifica/eda/. O script gera apenas tabe
 
 ### Executar a EDA do Adult (notebook)
 
+O notebook da Parte Específica fica em `src/parte_especifica/eda.ipynb`, conforme a estrutura do enunciado. Ele contém o código e a análise; os arquivos gerados ficam em `out/parte_especifica/`.
+
     jupyter notebook src/parte_especifica/eda.ipynb
 
 As figuras do notebook são gravadas em out/parte_especifica/figuras/. O notebook localiza a raiz do projeto sozinho, então pode ser aberto de qualquer pasta.

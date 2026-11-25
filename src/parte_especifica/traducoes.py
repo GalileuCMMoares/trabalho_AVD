@@ -6,9 +6,9 @@ import pandas as pd
 
 RENDA = {"<=50K": "Ate US$ 50 mil", ">50K": "Acima de US$ 50 mil"}
 ORDEM_RENDA = ["Ate US$ 50 mil", "Acima de US$ 50 mil"]
-CORES_RENDA = {"Ate US$ 50 mil": "#4C78A8", "Acima de US$ 50 mil": "#E45756"}
-COR_DESTAQUE = "#E45756"
-COR_CONTEXTO = "#B9C8D8"
+CORES_RENDA = {"Ate US$ 50 mil": "#77A7D1", "Acima de US$ 50 mil": "#E49B79"}
+COR_DESTAQUE = "#E49B79"
+COR_CONTEXTO = "#8DA5B8"
 
 # education-num -> nome do nivel (traducao aproximada do sistema escolar dos EUA)
 ESCOLARIDADE = {
@@ -26,10 +26,25 @@ ESCOLARIDADE = {
     12: "Tecnologo (academico)",
     13: "Graduacao",
     14: "Mestrado",
-    15: "Escola profissional",
+    15: "Titulo profissional (Prof-school, EUA)",
     16: "Doutorado",
 }
-ORDEM_ESCOLARIDADE = [ESCOLARIDADE[n] for n in sorted(ESCOLARIDADE)]
+# Posicionamento de apresentacao; titulos profissionais e academicos nao
+# formam necessariamente uma hierarquia linear de equivalencia.
+ORDEM_CODIGOS_ESCOLARIDADE = list(range(1, 14)) + [15, 14, 16]
+ORDEM_ESCOLARIDADE = [ESCOLARIDADE[n] for n in ORDEM_CODIGOS_ESCOLARIDADE]
+ORDEM_ESCOLARIDADE_AGRUPADA = [
+    "Até 8ª série (EUA)", "9ª a 12ª série, sem diploma (EUA)",
+    "Ensino médio completo (EUA)", "Faculdade sem diploma ou associate degree (EUA)",
+    "Bacharelado ou titulação superior (EUA)",
+]
+ESCOLARIDADE_AGRUPADA = {
+    **{n: ORDEM_ESCOLARIDADE_AGRUPADA[0] for n in range(1, 5)},
+    **{n: ORDEM_ESCOLARIDADE_AGRUPADA[1] for n in range(5, 9)},
+    9: ORDEM_ESCOLARIDADE_AGRUPADA[2],
+    **{n: ORDEM_ESCOLARIDADE_AGRUPADA[3] for n in range(10, 13)},
+    **{n: ORDEM_ESCOLARIDADE_AGRUPADA[4] for n in range(13, 17)},
+}
 NIVEL_GRADUACAO = 13  # a partir deste education-num o nivel e graduacao ou mais
 
 SEXO = {"Male": "Homem", "Female": "Mulher"}
@@ -106,6 +121,10 @@ def preparar_adult(df: pd.DataFrame) -> pd.DataFrame:
     df["renda"] = pd.Categorical(df["income"].map(RENDA), categories=ORDEM_RENDA, ordered=True)
     df["escolaridade"] = pd.Categorical(
         df["education-num"].map(ESCOLARIDADE), categories=ORDEM_ESCOLARIDADE, ordered=True
+    )
+    df["escolaridade_agrupada"] = pd.Categorical(
+        df["education-num"].map(ESCOLARIDADE_AGRUPADA),
+        categories=ORDEM_ESCOLARIDADE_AGRUPADA, ordered=True,
     )
     df["graduacao_ou_mais"] = df["education-num"] >= NIVEL_GRADUACAO
     df["sexo"] = traduzir(df["sex"], SEXO)

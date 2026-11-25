@@ -13,6 +13,8 @@ from traducoes import (
     ESCOLARIDADE,
     FAIXAS_HORAS,
     ORDEM_ESCOLARIDADE,
+    ORDEM_ESCOLARIDADE_AGRUPADA,
+    ORDEM_CODIGOS_ESCOLARIDADE,
     ORDEM_RENDA,
     inteiro,
     pct,
@@ -93,21 +95,15 @@ def exploratoria_2_idade(df: pd.DataFrame) -> None:
 
 def exploratoria_3_educacao(df: pd.DataFrame) -> None:
     """E3, nivel de escolaridade por faixa de renda, sem inferir causalidade."""
-    fig, ax = plt.subplots(figsize=(7.5, 6))
-    sns.boxplot(
-        data=df,
-        x="renda",
-        y="education-num",
-        order=ORDEM_RENDA,
-        hue="renda",
-        hue_order=ORDEM_RENDA,
-        palette=CORES_RENDA,
-        legend=False,
-        ax=ax,
-    )
-    ax.set_yticks(list(ESCOLARIDADE))
-    ax.set_yticklabels(ORDEM_ESCOLARIDADE)
-    finalizar(ax, "Nivel de escolaridade por faixa de renda", "Faixa de renda anual", "Nivel de escolaridade")
+    tabela = pd.crosstab(df["escolaridade_agrupada"], df["renda"], normalize="index").reindex(
+        index=ORDEM_ESCOLARIDADE_AGRUPADA, columns=ORDEM_RENDA, fill_value=0
+    ).fillna(0) * 100
+    fig, ax = plt.subplots(figsize=(9, 7))
+    tabela.plot.barh(stacked=True, ax=ax, color=[CORES_RENDA[renda] for renda in ORDEM_RENDA])
+    ax.set_xlim(0, 100)
+    ax.legend(title="Faixa de renda anual")
+    finalizar(ax, "Faixa de renda em cada nivel de escolaridade", "% de pessoas no nivel", "Escolaridade agrupada (EUA)")
+    rodape(ax, "Categorias dos EUA; associate degree nao representa equivalencia formal com diploma brasileiro.")
     salvar(fig, "03 - Escolaridade por Renda")
 
 
@@ -132,24 +128,23 @@ def exploratoria_4_ocupacao(df: pd.DataFrame) -> None:
 def explanatoria_1_pergunta_pesquisa(df: pd.DataFrame) -> None:
     """X1, responde diretamente a pergunta de pesquisa."""
     tabela = (
-        df.groupby("education-num", as_index=False)
+        df.groupby("escolaridade_agrupada", as_index=False, observed=True)
         .agg(taxa_alta_renda=("alta_renda", "mean"), pessoas=("alta_renda", "size"))
-        .sort_values("education-num")
+        .sort_values("escolaridade_agrupada")
     )
-    tabela["escolaridade"] = tabela["education-num"].map(ESCOLARIDADE)
-    destaque = tabela["education-num"] >= 13
+    destaque = tabela["escolaridade_agrupada"] == ORDEM_ESCOLARIDADE_AGRUPADA[-1]
     taxa_sup = df.loc[df["graduacao_ou_mais"], "alta_renda"].mean()
     taxa_inf = df.loc[~df["graduacao_ou_mais"], "alta_renda"].mean()
 
     fig, ax = plt.subplots(figsize=(9, 6.5))
     cores = np.where(destaque, COR_DESTAQUE, COR_CONTEXTO)
-    barras = ax.barh(tabela["escolaridade"], tabela["taxa_alta_renda"] * 100, color=cores)
+    barras = ax.barh(tabela["escolaridade_agrupada"].astype(str), tabela["taxa_alta_renda"] * 100, color=cores)
     for barra, valor, forte in zip(barras, tabela["taxa_alta_renda"], destaque):
         ax.text(valor * 100 + 0.8, barra.get_y() + barra.get_height() / 2, pct(valor, 0), va="center",
                 fontsize=9, fontweight="bold" if forte else "normal")
     finalizar(
         ax,
-        "A partir da graduacao, mais de 40% tem renda acima de US$ 50 mil",
+        "Taxa de renda acima de US$ 50 mil por escolaridade",
         "% de pessoas com renda acima de US$ 50 mil",
         "Escolaridade",
     )
@@ -157,7 +152,7 @@ def explanatoria_1_pergunta_pesquisa(df: pd.DataFrame) -> None:
     ax.set_xlim(0, 100)
     rodape(
         ax,
-        f"Vermelho, graduacao ou mais ({pct(taxa_sup)} no conjunto). Cinza, niveis abaixo da graduacao "
+        f"Coral, graduacao ou mais ({pct(taxa_sup)} no conjunto). Cinza azulado, niveis abaixo da graduacao "
         f"({pct(taxa_inf)}). Associacao descritiva, nao demonstra causalidade.",
     )
     salvar(fig, "05 - Pergunta por escolaridade")
@@ -166,11 +161,10 @@ def explanatoria_1_pergunta_pesquisa(df: pd.DataFrame) -> None:
 def explanatoria_2_horas_escolaridade(df: pd.DataFrame) -> None:
     """X2, comparacao multivariada que complementa a narrativa."""
     df = df.assign(faixa=df["faixa_horas"].astype(str))
-    taxa = pd.crosstab(df["education-num"], df["faixa"], values=df["alta_renda"], aggfunc="mean")
-    contagem = pd.crosstab(df["education-num"], df["faixa"])
-    taxa = taxa.reindex(columns=FAIXAS_HORAS).sort_index(ascending=False) * 100
+    taxa = pd.crosstab(df["escolaridade_agrupada"], df["faixa"], values=df["alta_renda"], aggfunc="mean")
+    contagem = pd.crosstab(df["escolaridade_agrupada"], df["faixa"])
+    taxa = taxa.reindex(index=list(reversed(ORDEM_ESCOLARIDADE_AGRUPADA)), columns=FAIXAS_HORAS) * 100
     contagem = contagem.reindex(index=taxa.index, columns=FAIXAS_HORAS).fillna(0)
-    taxa.index = [ESCOLARIDADE[n] for n in taxa.index]
 
     fig, ax = plt.subplots(figsize=(8.5, 7))
     ax.set_facecolor("#EEEEEE")

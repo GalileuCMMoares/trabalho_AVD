@@ -46,7 +46,7 @@ Declaro que **todas as decisões analíticas e metodológicas principais foram t
 **Etapa do projeto:** Visualizações e Dashboard com Streamlit 
 
 **Finalidade e forma de utilização:**  
-Após o grupo definir as seis visualizações da Parte Específica (quatro exploratórias e duas explanatórias)utilizei o Codex como apoio técnico para estruturar os scripts `visualizacoes.py`, responsáveis pela geração dos gráficos. Em seguida, utilizei a ferramenta para implementar o dashboard em Streamlit (`dashboard.py`), com filtros interativos, indicadores, gráficos e exportação do recorte filtrado em CSV. O dashboard calcula e exibe as visualizações diretamente a partir dos dados filtrados.
+Após o grupo definir as seis visualizações da Parte Específica (quatro exploratórias e duas explanatórias) utilizei o Codex como apoio técnico para estruturar os scripts `visualizacoes.py`, responsáveis pela geração dos gráficos. Em seguida, utilizei a ferramenta para implementar o dashboard em Streamlit (`dashboard.py`), com filtros interativos, indicadores, gráficos e exportação do recorte filtrado em CSV. O dashboard calcula e exibe as visualizações diretamente a partir dos dados filtrados.
 
 **Declaração de autoria e tomada de decisão:**  
 Declaro que as decisões analíticas e metodológicas da Parte Específica foram tomadas por mim. A definição da pergunta de pesquisa, a seleção das seis visualizações, a escolha dos filtros do dashboard e as decisões de tratamento dos dados foram discutidas, revisadas e validadas pelos integrantes. O uso do Codex foi restrito ao apoio técnico na implementação dos scripts de visualização e do dashboard em Streamlit. A interpretação dos resultados da EDA, a avaliação dos outliers, as justificativas apresentadas no relatório e as conclusões sobre os dados são de responsabilidade do grupo.
@@ -83,11 +83,11 @@ ___________________________________________________
 **Galileu Calaça Menezes de Moraes**
 
 <br>
-                      CaioGR
+
 ___________________________________________________  
 **Caio Guimarães Rocha**
 
 <br>
-                      MateusAR
+
 ___________________________________________________  
 **Mateus de Almeida Ribeiro**
