@@ -1,23 +1,24 @@
 """Notas analiticas de cada visualizacao do dashboard (mesmo texto do relatorio).
 
-Cada nota tem tres partes, o que o grafico mostra, o insight e o motivo da escolha do grafico.
-Os numeros se referem a base completa (48.842 pessoas), sem filtros.
+Cada nota tem três partes: o que o grafico mostra, o insight e o motivo da escolha do grafico.
+Os numeros se referem à base completa (48.842 pessoas), sem filtros.
 """
 
 # [IA] Claude Code - notas analiticas exibidas no dashboard
+# [IA] GitHub Copilot – revisão de pontuação do texto existente, sem gerar interpretações.
 
 NOTAS = {
     "renda": (
         "Quantidade e percentual de pessoas em cada faixa de renda anual.",
-        "A base e desbalanceada, com 37.155 pessoas (76,1%) ate US$ 50 mil e 11.687 (23,9%) acima. "
-        "Por isso os demais graficos comparam taxas e distribuicoes em percentual, e nao contagens absolutas.",
+        "A base é desbalanceada, com 37.155 pessoas (76,1%) ate US$ 50 mil e 11.687 (23,9%) acima. "
+        "Por isso, os demais graficos comparam taxas e distribuicoes em percentual, e nao contagens absolutas.",
         "Barras comparam duas categorias pelo comprimento, e o rotulo com numero e percentual "
         "evita depender da leitura do eixo.",
     ),
     "idade": (
         "Distribuicao da idade dentro de cada faixa de renda, em percentual do proprio grupo.",
         "Quem ganha acima de US$ 50 mil e mais velho (mediana de 43 anos, contra 34). A taxa de renda alta "
-        "e quase nula ate 25 anos (1,8%) e chega ao maximo entre 46 e 55 anos (39,2%). Mesmo assim as duas "
+        "e quase nula ate 25 anos (1,8%) e chega ao maximo entre 46 e 55 anos (39,2%). Mesmo assim, as duas "
         "distribuicoes se sobrepoem bastante, entao a idade sozinha nao separa as faixas.",
         "O histograma mostra forma e sobreposicao de uma variavel numerica, e a normalizacao dentro de cada "
         "grupo corrige o desbalanceamento da base.",
@@ -54,17 +55,17 @@ NOTAS = {
     ),
     "pergunta": (
         "Taxa de renda acima de US$ 50 mil em cada grupo de escolaridade, na ordem dos niveis de ensino.",
-        "Ate a 12a serie sem diploma a taxa fica perto de 6%. Ela sobe para 15,9% no ensino medio completo e "
+        "Até a 12ª série sem diploma, a taxa fica perto de 6%. Ela sobe para 15,9% no ensino medio completo e "
         "20,6% em faculdade sem diploma ou associate degree, e da um salto para 48,1% em bacharelado ou mais, "
         "tres vezes a taxa do conjunto abaixo do bacharelado (16,0%). Este e o grafico que responde "
-        "diretamente a pergunta de pesquisa.",
+        "diretamente à pergunta de pesquisa.",
         "Com as barras na ordem dos niveis, a posicao mostra onde a taxa muda, e a cor destaca so o grupo de "
         "bacharelado ou mais, que concentra a diferenca. O titulo ja diz a conclusao.",
     ),
     "mapa": (
         "Taxa de renda acima de US$ 50 mil em cada faixa de horas semanais, com uma linha para cada grupo de "
         "escolaridade. Pontos com menos de 30 pessoas sao omitidos.",
-        "Em todos os grupos a taxa sobe com a jornada ate a faixa de 41 a 50 horas e depois quase nao muda "
+        "Em todos os grupos, a taxa sobe com a jornada ate a faixa de 41 a 50 horas e depois quase nao muda "
         "(bacharelado ou mais vai de 60,6% para 62,4%). A escolaridade pesa mais que a jornada: quem tem "
         "ensino medio completo e trabalha 51 horas ou mais tem 27,9% de renda alta, menos do que quem tem "
         "bacharelado ou mais e trabalha 40 horas (42,3%). Ou seja, jornada longa nao compensa escolaridade baixa.",

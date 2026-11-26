@@ -51,6 +51,7 @@ def finalizar(ax: plt.Axes, titulo: str, xlabel: str, ylabel: str) -> None:
 
 
 def rodape(ax: plt.Axes, texto: str, y: float = -0.14) -> None:
+    # [IA] GitHub Copilot – revisão textual dos rodapés das duas figuras explanatórias.
     ax.text(0, y, texto, transform=ax.transAxes, fontsize=8.5, color="#555555")
 
 
@@ -154,8 +155,8 @@ def explanatoria_1_pergunta_pesquisa(df: pd.DataFrame) -> None:
     ax.set_xlim(0, 100)
     rodape(
         ax,
-        f"Coral, bacharelado ou mais ({pct(taxa_sup)} no conjunto). Cinza azulado, grupos abaixo do bacharelado "
-        f"({pct(taxa_inf)}). Associacao descritiva, nao demonstra causalidade.",
+        f"Coral: bacharelado ou mais ({pct(taxa_sup)} no conjunto). Cinza azulado: grupos abaixo do bacharelado "
+        f"({pct(taxa_inf)}). Associação descritiva; não demonstra causalidade.",
     )
     salvar(fig, "05 - Pergunta por escolaridade")
 
@@ -200,7 +201,7 @@ def explanatoria_2_horas_escolaridade(df: pd.DataFrame) -> None:
     rodape(
         ax,
         f"Cada ponto e a % de pessoas com renda acima de US$ 50 mil no grupo e na faixa de horas. Pontos com menos "
-        f"de {MINIMO_CELULA} pessoas sao omitidos. Associacao descritiva, nao demonstra causalidade.",
+        f"de {MINIMO_CELULA} pessoas são omitidos. Associação descritiva; não demonstra causalidade.",
         y=-0.14,
     )
     salvar(fig, "06 - Escolaridade por Horas")

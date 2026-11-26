@@ -1,0 +1,9 @@
+Variável,Limite Inferior,Limite Superior,Qtd Outliers,% Outliers
+Age,10.79,35.13,167,8.0
+Height,1.42,1.98,1,0.05
+Weight,2.98,171.04,1,0.05
+FCVC,0.5,4.5,0,0.0
+NCP,2.24,3.45,577,27.65
+CH2O,0.28,3.78,0,0.0
+FAF,-2.21,4.01,0,0.0
+TUE,-1.5,2.5,0,0.0

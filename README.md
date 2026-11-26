@@ -1,6 +1,6 @@
 # Projeto Final de AVD
 
-Projeto final da disciplina de Análise e Visualização de Dados (AVD) 2026.2. A Parte Comum usa o dataset Obesity e a Parte Específica usa o dataset Adult, ambos do UCI Machine Learning Repository.
+Projeto final da disciplina de Análise e Visualização de Dados (AVD), semestre 2026.2. A Parte Comum usa o dataset Obesity, e a Parte Específica usa o dataset Adult, ambos do UCI Machine Learning Repository.
 
 ## Dataset da Parte Comum
 
@@ -77,8 +77,8 @@ O aplicativo tem duas paginas. A pagina da Parte Especifica tem filtros de perfi
 
 - data/parte_comum/: dataset comum da turma (Obesity, do UCI Machine Learning Repository).
 - data/parte_especifica/: dados do Adult obtidos pelo script.
-- docs/relatorio_template.md: roteiro para o relatório.
-- docs/DECLARACAO_IA.md: rascunho da declaração de uso de IA (exportar assinada como docs/DECLARACAO_IA.pdf para entrega).
+- [Relatório técnico](relatorio.pdf) e [fonte editável](docs/relatorio_template.md).
+- [Declaração de uso de IA assinada](docs/DECLARACAO_IA.pdf).
 - notebooks/parte_comum/: notebooks da Parte Comum (eda.ipynb e kmeans_metricas.ipynb).
 - notebooks/parte_especifica/: notebook da EDA do Adult (eda.ipynb).
 - out/: tabelas e figuras geradas pelos notebooks e scripts (versionadas, pois o relatório faz referência a elas). Em out/parte_comum/kmeans/ ficam os resultados do K-Means; em out/parte_especifica/ ficam eda/ (tabelas), figuras/ (EDA) e visualizacoes/ (as seis visualizações).

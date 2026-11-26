@@ -11,7 +11,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from scipy.optimize import linear_sum_assignment
+from itertools import permutations
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -457,7 +457,8 @@ def pagina_especifica() -> None:
             file_name="adult_filtrado.csv",
             mime="text/csv",
         )
-        st.caption("Fonte, UCI Machine Learning Repository, Adult (Becker e Kohavi, 1996).")
+        # [IA] GitHub Copilot – revisão de pontuação da indicação de fonte.
+        st.caption("Fonte: UCI Machine Learning Repository, Adult (Becker e Kohavi, 1996).")
 
 
 # ---------------------------------------------------------------- Parte Comum (Obesity)
@@ -616,15 +617,17 @@ def pagina_comum() -> None:
         st.markdown(
             "As 7 classes agrupadas em 4 macro-classes (Abaixo do Peso, Normal, Sobrepeso e Obesidade), avaliadas com os "
             f"clusters da Passada 1 (k = {K_LIVRE}). Pelo mapeamento por maioria, dois clusters recebem o rotulo Obesidade "
-            "e a coluna Sobrepeso fica zerada. O mapeamento um-para-um (algoritmo hungaro) obriga cada cluster a receber "
+            "e a coluna Sobrepeso fica zerada. O mapeamento um-para-um compara as 24 atribuições possíveis e dá a cada cluster "
             "uma macro-classe diferente."
         )
         y4 = y.map(MACRO_CLASSES)
         composicao = pd.crosstab(pd.Series(rotulos[K_LIVRE], name="Cluster"), y4.rename("Macro-classe"))[ORDEM_MACRO]
-        linhas, colunas = linear_sum_assignment(-composicao.to_numpy())
+        # [IA] GitHub Copilot – busca exata nas 4! atribuições sem dependência direta de SciPy.
+        contagens = composicao.to_numpy()
+        colunas = max(permutations(range(4)), key=lambda ordem: sum(contagens[i, j] for i, j in enumerate(ordem)))
         mapeamentos = {
             "Por maioria": composicao.idxmax(axis=1).to_dict(),
-            "Um-para-um": {composicao.index[i]: ORDEM_MACRO[j] for i, j in zip(linhas, colunas)},
+            "Um-para-um": {composicao.index[i]: ORDEM_MACRO[j] for i, j in enumerate(colunas)},
         }
         baseline_macro = y4.value_counts(normalize=True).max()
         resumo = []
